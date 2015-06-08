@@ -1,0 +1,22 @@
+#!/bin/bash
+
+function run_test
+{
+    local root=$(git rev-parse --show-toplevel)
+    local changelog=CHANGELOG.md
+    
+    if git diff --ignore-space-change --cached --quiet ${root}/${changelog}
+    then
+        echo >&2 "Warning: no change detected in change log at ${changelog}. The commit was accepted, but it is highly recommended to commit a summary of any high level changes to the change log."
+    fi
+
+}
+
+case "${1}" in
+    --about )
+        echo -n "Check changelog has been updated along with code."
+        ;;
+    * )
+        run_test "$@"
+        ;;
+esac
