@@ -9,7 +9,7 @@ A git plugin to make adherance to
 
 easier.
 
-Git semvar requires a [CHANGELOG.md] file to be maintained. This will be need be filled for the version before the version is created.
+Git semvar requires a [CHANGELOG] file to be maintained. This will be need be filled for the version before the version is created.
 
 ### Semantic versioning
 

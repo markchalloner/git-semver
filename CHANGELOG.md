@@ -16,5 +16,9 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
 - Licence file [LICENCE.md]
 - Installer and uninstaller
 
+[README.md]: README.md
+[CONTRIBUTING.md]: CONTRIBUTING.md
+[LICENCE.md]: LICENCE.md
+
 [unreleased]: https://github.com/markchalloner/git-semver/compare/1.0.0...HEAD
 
