@@ -21,7 +21,7 @@ Git semvar requires a [CHANGELOG] file to be maintained. This will be need be fi
 
 ### Change log
 
-A change log lists changes 
+A change log is a file which contains a curated, chronologically ordered list of notable changes for each version of a project.
 
 git-semvar uses change log convention from [Keep a CHANGELOG](http://keepachangelog.com). A change log lists notable changes for each release of a project.
 
@@ -40,6 +40,7 @@ For a new version to be generated, a change log must have already been commited 
 
 ``` markdown
 ## [{{version}}] - {{YYYY-MM-DD}}
+
 ### Added
 - Details...
 ...
