@@ -96,7 +96,7 @@ git semvar minor
 
 If no version has been created, the initial version will be: **0.1.0**
 
-#### Minor
+#### Major
 
 Increment the major component (0.1.0 -> 1.0.0)
 
