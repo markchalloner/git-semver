@@ -142,7 +142,12 @@ sudo rm /usr/local/bin/git-semver
 
 Please see [CHANGELOG] for more information what has changed recently.
 
+## Contributing
+
+Please see [CONTRIBUTING] for details.
+
 [CHANGELOG]: CHANGELOG.md
+[CONTRIBUTING]: CONTRIBUTING.md
 [Semantic Versioning 2.0.0]: http://semver.org/spec/v2.0.0.html
 [Change Log Management]: http://keepachangelog.com/
 [Keep a CHANGELOG]: http://keepachangelog.com/
