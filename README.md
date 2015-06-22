@@ -9,7 +9,7 @@ A git plugin to make adherance to
 
 easier.
 
-Git semvar requires a [CHANGELOG] file to be maintained. This will be need be filled for the version before the version is created.
+Git semver requires a [CHANGELOG] file to be maintained. This will be need be filled for the version before the version is created.
 
 ### Semantic versioning
 
@@ -23,7 +23,7 @@ Git semvar requires a [CHANGELOG] file to be maintained. This will be need be fi
 
 A change log is a file which contains a curated, chronologically ordered list of notable changes for each version of a project.
 
-git-semvar uses change log convention from [Keep a CHANGELOG](http://keepachangelog.com). A change log lists notable changes for each release of a project.
+git-semver uses change log convention from [Keep a CHANGELOG](http://keepachangelog.com). A change log lists notable changes for each release of a project.
 
 For a new version to be generated, a change log must have already been commited which includes:
 
@@ -52,11 +52,11 @@ See [Keep a CHANGELOG] for full details.
 
 ## Installation
 
-Via git clone. The installer creates a symlink at /usr/local/bin/git-semvar:
+Via git clone. The installer creates a symlink at /usr/local/bin/git-semver:
 
 ``` bash
-git clone git@github.com/markchalloner/git-semvar.git
-sudo git-semvar/install.sh
+git clone git@github.com/markchalloner/git-semver.git
+sudo git-semver/install.sh
 ```
 
 ## Usage
@@ -64,7 +64,7 @@ sudo git-semvar/install.sh
 ### Get latest version tag
 
 ``` bash
-git semvar get
+git semver get
 ```
 
 Will return empty if no version has been created.
@@ -74,7 +74,7 @@ Will return empty if no version has been created.
 Versions are created as tags and are generated using:
 
 ``` bash
-git semvar [major|minor|patch|next]
+git semver [major|minor|patch|next]
 ```
 
 #### Patch (Next)
@@ -82,7 +82,7 @@ git semvar [major|minor|patch|next]
 Increment the patch component (0.1.0 -> 0.1.1)
 
 ``` bash
-git semvar patch|next
+git semver patch|next
 ```
 
 If no version has been created, the initial version will be: **0.1.0**
@@ -92,7 +92,7 @@ If no version has been created, the initial version will be: **0.1.0**
 Increment the minor component (0.1.0 -> 0.2.0)
 
 ``` bash
-git semvar minor
+git semver minor
 ```
 
 If no version has been created, the initial version will be: **0.1.0**
@@ -102,17 +102,17 @@ If no version has been created, the initial version will be: **0.1.0**
 Increment the major component (0.1.0 -> 1.0.0)
 
 ``` bash
-git semvar major
+git semver major
 ```
 
 If no version has been created, the initial version will be: **1.0.0**
 
 ### Help
 
-Run git semvar with no arguments to see usage
+Run git semver with no arguments to see usage
 
 ``` bash
-git semvar [help]
+git semver [help]
 ```
 
 ## Updates
@@ -128,7 +128,7 @@ git pull
 Via uninstaller in clone directory. Navigate to your original clone directory and run:
 
 ``` bash
-sudo git-semvar/uninstall.sh
+sudo git-semver/uninstall.sh
 ```
 
 Manually
