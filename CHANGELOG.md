@@ -10,6 +10,7 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
 
 ### Fixed
 - [README.md]
+- Bug in reading git origin
 
 ## 1.0.0 - 2015-06-08
 

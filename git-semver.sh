@@ -32,10 +32,10 @@ check-changelog() {
     local tag=$1
     local root=$(git rev-parse --show-toplevel)
     local origin=$(git config --get remote.origin.url | sed 's/^[^:]\+://g' | sed 's/\.git$//g')
-    local compareurl=https://github.com/${origin}/compare
+    local compareurl=https:${origin}/compare
     local changelog=CHANGELOG.md
 
-    # Check if there is an existing tag and relax rules if not
+    # If there is no existing tag relax rules slightly
     local require_link=1
     local tag_grep="\[${tag}\]"
     local tag_actual="[${tag}]"
