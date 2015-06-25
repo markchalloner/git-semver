@@ -5,12 +5,16 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
 
 ## [Unreleased][unreleased]
 
+## [1.0.1] - 2015-06-08
 ### Added
 - [CONTRIBUTING.md]
+- Help for recommiting after change
 
 ### Fixed
 - [README.md]
-- Bug in reading git origin
+- Bugs in reading git origin
+- Show all errors in one go
+- More compatible with Windows (and possibly OSX)
 
 ## 1.0.0 - 2015-06-08
 
@@ -24,5 +28,5 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
 [CONTRIBUTING.md]: CONTRIBUTING.md
 [LICENCE.md]: LICENCE.md
 
-[unreleased]: https://github.com/markchalloner/git-semver/compare/1.0.0...HEAD
-
+[unreleased]: https://github.com/markchalloner/git-semver/compare/1.0.1...HEAD
+[1.0.1]: https://github.com/markchalloner/git-semver/compare/1.0.0...1.0.1

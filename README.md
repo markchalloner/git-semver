@@ -52,7 +52,15 @@ See [Keep a CHANGELOG] for full details.
 
 ## Installation
 
-Via git clone. The installer creates a symlink at /usr/local/bin/git-semver:
+Via git clone. 
+
+The installer installs git-semver into the first of the following directories that exist and are in the path:
+
+- /usr/local/bin
+- /usr/bin
+- /bin
+
+In Linux the installer will create a symlink. In Windows MinGW creates a copy instead.
 
 ``` bash
 git clone git@github.com/markchalloner/git-semver.git
@@ -121,6 +129,8 @@ Updates can be pulled down from github. Navigate to your original clone director
 
 ``` bash
 git pull
+# In Windows MinGW symlinks arent supported so rerun the installer
+sudo ./install.sh
 ```
 
 ## Uninstallation
@@ -133,10 +143,16 @@ sudo git-semver/uninstall.sh
 
 Manually
 
-git-semver is installed by placing a symlink in /usr/local/bin. This can be deleted easily:
+git-semver is installed by placing a symlink/copy in one of the bin directories in the path. 
+
+- /usr/local/bin
+- /usr/bin
+- /bin
+
+It can be deleted easily:
 
 ``` bash
-sudo rm /usr/local/bin/git-semver
+sudo rm $(which git-semver)
 ```
 
 ## Change log
