@@ -47,6 +47,23 @@ join() {
     printf "%s" "$elements${@/#/$separator}"
 }
 
+check-update(){
+    local dir_self=$(dirname realpath $0)
+				if $(which git) && [ -d "${dir_self}/.git" ]
+				then
+				    (cd $dir_self && git fetch)
+				    local version=$(git tag | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$" | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)
+				    if [ $(git rev-list --left-right HEAD...${version} | grep "^>" | wc -l | sed 's/ //g') -gt 0 ]
+				    then
+				        local do_upgrade=get_user_input "Version ${version} has been released. Would you like to upgrade (y/n)?" "y"
+				        if [ "${do_upgrade}" == "y" ]
+				        then
+				            git checkout ${version}
+				        fi
+				    fi
+				fi
+}
+
 check-changelog() {
     local tag=$1
     local root=$(git rev-parse --show-toplevel)
