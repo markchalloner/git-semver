@@ -75,7 +75,7 @@ check-changelog() {
         return 1
     fi
     
-    local tag_prev=$(git show HEAD:CHANGELOG.md | grep '^## \[\?[0-9]\+\.[0-9]\+\.[0-9]\]\? - ' | tail -n 1 | sed 's/^## \[\?\([0-9]\+\.[0-9]\+\.[0-9]\)\]\?.*$/\1/g')
+    local tag_prev=$(git show HEAD:CHANGELOG.md | grep '^## \[\?[0-9]\+\.[0-9]\+\.[0-9]\]\? - ' | head -n 2 | tail -n 1 | sed 's/^## \[\?\([0-9]\+\.[0-9]\+\.[0-9]\)\]\?.*$/\1/g')
     
     if ! git show HEAD:${changelog} | grep -q "^## ${tag_grep} - [0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}"
     then
