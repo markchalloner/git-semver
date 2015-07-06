@@ -2,7 +2,7 @@
 pushd $(dirname $0) > /dev/null
 DIR_SELF=$(pwd -P)
 popd > /dev/null
-dirs=("/usr/local/bin" "/usr/bin" "/bin")
+dirs=("$HOME/bin" "/usr/local/bin" "/usr/bin" "/bin")
 for i in "${dirs[@]}"
 do
     if [ -d "${i}" ] && $(echo $PATH | grep -q "${i}")
