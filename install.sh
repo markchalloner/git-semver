@@ -27,9 +27,9 @@ FILE_CONF_SRC="${DIR_SELF}/config.example"
 FILE_CONF_DEST="${DIR_DATA}/config"
 
 # Windows MinGW uses a stub
-if [ -L "${FILE_DST}" ] || ( [ ${OS_MINGW} -eq 0 ] && [ -f "${FILE_DST}" ] )
+if [ -L "${FILE_DEST}" ] || ( [ ${OS_MINGW} -eq 0 ] && [ -f "${FILE_DEST}" ] )
 then
-    rm "${FILE_DST}"
+    rm "${FILE_DEST}"
 fi
 
 
