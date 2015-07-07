@@ -49,19 +49,19 @@ join() {
 
 check-update(){
     local dir_self=$(dirname realpath $0)
-				if $(which git) && [ -d "${dir_self}/.git" ]
-				then
-				    (cd $dir_self && git fetch)
-				    local version=$(git tag | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$" | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)
-				    if [ $(git rev-list --left-right HEAD...${version} | grep "^>" | wc -l | sed 's/ //g') -gt 0 ]
-				    then
-				        local do_upgrade=get_user_input "Version ${version} has been released. Would you like to upgrade (y/n)?" "y"
-				        if [ "${do_upgrade}" == "y" ]
-				        then
-				            git checkout ${version}
-				        fi
-				    fi
-				fi
+    if $(which git) && [ -d "${dir_self}/.git" ]
+    then
+        (cd $dir_self && git fetch)
+        local version=$(git tag | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$" | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)
+        if [ $(git rev-list --left-right HEAD...${version} | grep "^>" | wc -l | sed 's/ //g') -gt 0 ]
+        then
+            local do_upgrade=get_user_input "Version ${version} has been released. Would you like to upgrade (y/n)?" "y"
+            if [ "${do_upgrade}" == "y" ]
+            then
+                git checkout ${version}
+            fi
+        fi
+    fi
 }
 
 check-changelog() {
@@ -167,51 +167,51 @@ version-get() {
 }
 
 version-major() {
-	local version=$(version-get)
-	local major=$(version-parse-major ${version})
-	if [ "" == "$version" ]
-	then
-		local new=1.0.0
-	else
-		local new=$((${major} + 1)).0.0
-	fi
-	if check-changelog $new
-	then
-		git tag $new && echo $new
-	fi
+    local version=$(version-get)
+    local major=$(version-parse-major ${version})
+    if [ "" == "$version" ]
+    then
+        local new=1.0.0
+    else
+        local new=$((${major} + 1)).0.0
+    fi
+    if check-changelog $new
+    then
+        git tag $new && echo $new
+    fi
 }
 
 version-minor() {
-	local version=$(version-get)
-	local major=$(version-parse-major ${version})
-	local minor=$(version-parse-minor ${version})
-	if [ "" == "$version" ]
-	then
-		local new=0.1.0
-	else
-		local new=${major}.$((${minor} + 1)).0
-	fi
-	if check-changelog $new
-	then
-		git tag $new && echo $new
-	fi
+    local version=$(version-get)
+    local major=$(version-parse-major ${version})
+    local minor=$(version-parse-minor ${version})
+    if [ "" == "$version" ]
+    then
+        local new=0.1.0
+    else
+        local new=${major}.$((${minor} + 1)).0
+    fi
+    if check-changelog $new
+    then
+        git tag $new && echo $new
+    fi
 }
 
 version-patch() {
-	local version=$(version-get)
-	local major=$(version-parse-major ${version})
-	local minor=$(version-parse-minor ${version})
-	local patch=$(version-parse-patch ${version})
-	if [ "" == "$version" ]
-	then
-	    local new=0.1.0
-	else
-	    local new=${major}.${minor}.$(($patch + 1))
-	fi
-	if check-changelog $new
-	then
-		git tag $new && echo $new
-	fi
+    local version=$(version-get)
+    local major=$(version-parse-major ${version})
+    local minor=$(version-parse-minor ${version})
+    local patch=$(version-parse-patch ${version})
+    if [ "" == "$version" ]
+    then
+        local new=0.1.0
+    else
+        local new=${major}.${minor}.$(($patch + 1))
+    fi
+    if check-changelog $new
+    then
+        git tag $new && echo $new
+    fi
 }
 
 ########################################
@@ -219,24 +219,24 @@ version-patch() {
 ########################################
 
 case "$1" in
-	get)
-		version-get
-		;;
-	major)
-		version-major
-		;;	
-	minor)
-		version-minor
-		;;
-	patch|next)
-		version-patch
-		;;
-	help)
-		usage
-		break
-		;;
-	*)
-		usage
-		break
-		;;
+    get)
+        version-get
+        ;;
+    major)
+        version-major
+        ;;    
+    minor)
+        version-minor
+        ;;
+    patch|next)
+        version-patch
+        ;;
+    help)
+        usage
+        break
+        ;;
+    *)
+        usage
+        break
+        ;;
 esac
