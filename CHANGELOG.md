@@ -5,7 +5,7 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
 
 ## [Unreleased][unreleased]
 
-## [1.0.3] - 2015-07-07
+## [1.1.0] - 2015-07-07
 ### Added
 - Update checks
 - Ability to disable changelog checks
@@ -37,7 +37,7 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
 - Licence file [LICENCE.md]
 - Installer and uninstaller
 
-[unreleased]: https://github.com/markchalloner/git-semver/compare/1.0.3...HEAD
-[1.0.3]: https://github.com/markchalloner/git-semver/compare/1.0.2...1.0.3
+[unreleased]: https://github.com/markchalloner/git-semver/compare/1.1.0...HEAD
+[1.1.0]: https://github.com/markchalloner/git-semver/compare/1.0.2...1.1.0
 [1.0.2]: https://github.com/markchalloner/git-semver/compare/1.0.1...1.0.2
 [1.0.1]: https://github.com/markchalloner/git-semver/compare/1.0.0...1.0.1
