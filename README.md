@@ -5,13 +5,13 @@
 A git plugin to make adherance to
 
 - [Semantic Versioning 2.0.0]
-- [Change Log Management] (optional)
+- [Change Log Management][Keep a CHANGELOG] (optional)
 
 easier.
 
 With its default settings, git semver requires a [CHANGELOG.md] file to be maintained. This will be need be filled for the version before the version is created.
 
-Change log management can be [disabled][Disabling] however for this is **NOT recommended**
+Change log management can be [disabled](#disabling) however this is **NOT recommended**.
 
 ### Semantic versioning
 
@@ -45,7 +45,9 @@ For a new version to be generated, a change log must have already been commited 
 
 ### Added
 - Details...
+
 ...
+
 [unreleased]: https://github.com/oban/oban-site/compare/{{version}}...HEAD
 [{{version}}]: https://github.com/oban/oban-site/compare/{{previous version}}...{{version}}
 ```
@@ -54,7 +56,7 @@ See [Keep a CHANGELOG] for full details.
 
 #### Disabling
 
-Change log checking can be disabled by changing the [Configuration] setting:
+Change log checking can be disabled by changing the [configuration](#configuration) setting:
 
 ``` bash
 CHANGELOG_CHECK=0
@@ -77,7 +79,7 @@ git clone git@github.com/markchalloner/git-semver.git
 sudo git-semver/install.sh
 ```
 
-The installer will not overwrite any existing [Configuration].
+The installer will not overwrite any existing [configuration](#configuration).
 
 ## Usage
 
@@ -155,13 +157,13 @@ The tool has a built in updater that checks for a new version of git semver
 git semver update
 ```
 
-By default it will automatically check for a new version daily. The automatic check can be disabled by changing the [Configuration] setting:
+By default it will automatically check for a new version daily. The automatic check can be disabled by changing the [configuration](#configuration) setting:
 
 ``` bash
 UPDATE_CHECK=0
 ```
 
-The updaate check interval in days can be set by changing the [Configuration] setting:
+The updaate check interval in days can be set by changing the [configuration](#configuration) setting:
 
 ``` bash
 UPDATE_CHECK_INTERVAL_DAYS=1
@@ -213,3 +215,6 @@ Please see [CONTRIBUTING.md] for details.
 [Semantic Versioning 2.0.0]: http://semver.org/spec/v2.0.0.html
 [Change Log Management]: http://keepachangelog.com/
 [Keep a CHANGELOG]: http://keepachangelog.com/
+[CHANGELOG.md]: CHANGELOG.md
+[CONTRIBUTING.md]: CONTRIBUTING.md
+[config.example]: config.example
