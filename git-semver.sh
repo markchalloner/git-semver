@@ -254,13 +254,14 @@ changelog-check() {
     local require_link=1
     local tag_grep="\[${tag}\]"
     local tag_actual="[${tag}]"
+    local tag_prev=
     if [ "" == "$($0 get)" ]
     then
         require_link=0
         tag_grep="${tag}"
         tag_actual="${tag}"
     fi
-    local tag_prev=
+    tag_grep="$(echo "${tag_grep}" | sed 's#\.#\\.#g')"
 
     if ! git show HEAD:${changelog} > /dev/null 2>&1
     then
@@ -271,7 +272,7 @@ changelog-check() {
     local changelog_content=$(git show HEAD:${changelog})
     local changelog_tags=$(echo "${changelog_content}" | grep '^## \[\?[0-9]\+\.[0-9]\+\.[0-9]\]\? - ')
 
-    if ! echo ${changelog_content} | grep -q "^## ${tag_grep} - [0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}"
+    if ! echo "${changelog_content}" | grep -q "^## ${tag_grep} - [0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}"
     then
         echo -e "Error: no changelog details found for ${tag}. Change log should be recorded in ${changelog} with the format\n\n## ${tag_actual} - YYYY-MM-DD\n### Added\n- Details...\n\nSee http://keepachangelog.com/ for full format\n"
         status=1
@@ -280,7 +281,7 @@ changelog-check() {
         tag_prev=$(echo "${changelog_tags}" | head -n 2 | tail -n 1 | sed 's/^## \[\?\([0-9]\+\.[0-9]\+\.[0-9]\)\]\?.*$/\1/g')
     fi
 
-    if ! echo ${changelog_content} | grep -q "^\[unreleased\]: ${compareurl}/${tag}\.\.\.HEAD$"
+    if ! echo "${changelog_content}" | grep -q "^\[unreleased\]: ${compareurl}/${tag}\.\.\.HEAD$"
     then
         #echo -e "Error: no changelog link for unreleased. Please update the unreleased link at the bottom of the changelog to: \n\n[unreleased]: ${compareurl}/${tag}...HEAD\n"
         update_links_desc+=("unreleased")
@@ -288,7 +289,7 @@ changelog-check() {
         update_links=1
     fi
 
-    if [ ${require_link} -eq 1 ] && ! echo ${changelog_content} | grep -q "^\[${tag}\]: ${compareurl}/${tag_prev}\.\.\.${tag}$"
+    if [ ${require_link} -eq 1 ] && ! echo "${changelog_content}" | grep -q "^\[${tag}\]: ${compareurl}/${tag_prev}\.\.\.${tag}$"
     then
         #echo -e "Error: no changelog link for ${tag}. Please add the ${tag} link at the bottom of the changelog: \n\n[${tag}]: ${compareurl}/${tag_prev}...${tag}\n"
         update_links_desc+=("version ${tag}")
