@@ -5,6 +5,15 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
 
 ## [Unreleased][unreleased]
 
+## [1.0.3] - 2015-07-07
+### Added
+- Update checks
+- Ability to disable changelog checks
+- Purge option to uninstaller to remove configuration files
+
+### Fixed
+- Installer symlink on MinGW
+
 ## [1.0.2] - 2015-07-06
 ### Fixed
 - Bug in reading previous version from [CHANGELOG.md]
@@ -22,13 +31,13 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
 - More compatible with Windows (and possibly OSX)
 
 ## 1.0.0 - 2015-06-08
-
 ### Added
 - Initial version
 - Readme file with documentation [README.md]
 - Licence file [LICENCE.md]
 - Installer and uninstaller
 
-[unreleased]: https://github.com/markchalloner/git-semver/compare/1.0.2...HEAD
+[unreleased]: https://github.com/markchalloner/git-semver/compare/1.0.3...HEAD
+[1.0.3]: https://github.com/markchalloner/git-semver/compare/1.0.2...1.0.3
 [1.0.2]: https://github.com/markchalloner/git-semver/compare/1.0.1...1.0.2
 [1.0.1]: https://github.com/markchalloner/git-semver/compare/1.0.0...1.0.1

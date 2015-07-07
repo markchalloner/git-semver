@@ -1,0 +1,8 @@
+# Check for a valid change log and change log entry
+CHANGELOG_CHECK=1
+
+# Check for a updates automatically
+UPDATE_CHECK=1
+
+# Check for updated every X days
+UPDATE_CHECK_INTERVAL_DAYS=1

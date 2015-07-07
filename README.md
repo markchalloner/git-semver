@@ -2,14 +2,16 @@
 
 ## Introduction
 
-A git plugin to make adherance to 
+A git plugin to make adherance to
 
 - [Semantic Versioning 2.0.0]
-- [Change Log Management]
+- [Change Log Management][Keep a CHANGELOG] (optional)
 
 easier.
 
-Git semver requires a [CHANGELOG] file to be maintained. This will be need be filled for the version before the version is created.
+With its default settings, git semver requires a [CHANGELOG.md] file to be maintained. This will be need be filled for the version before the version is created.
+
+Change log management can be [disabled](#disabling) however this is **NOT recommended**.
 
 ### Semantic versioning
 
@@ -43,16 +45,26 @@ For a new version to be generated, a change log must have already been commited 
 
 ### Added
 - Details...
+
 ...
+
 [unreleased]: https://github.com/oban/oban-site/compare/{{version}}...HEAD
 [{{version}}]: https://github.com/oban/oban-site/compare/{{previous version}}...{{version}}
 ```
 
 See [Keep a CHANGELOG] for full details.
 
+#### Disabling
+
+Change log checking can be disabled by changing the [configuration](#configuration) setting:
+
+``` bash
+CHANGELOG_CHECK=0
+```
+
 ## Installation
 
-Via git clone. 
+Via git clone.
 
 The installer installs git-semver into the first of the following directories that exist and are in the path:
 
@@ -60,12 +72,14 @@ The installer installs git-semver into the first of the following directories th
 - /usr/bin
 - /bin
 
-In Linux the installer will create a symlink. In Windows MinGW creates a copy instead.
+In Linux, OSX and Windows Cygwin the installer will create a symlink. In Windows MinGW creates a stub instead.
 
 ``` bash
 git clone git@github.com/markchalloner/git-semver.git
 sudo git-semver/install.sh
 ```
+
+The installer will not overwrite any existing [configuration](#configuration).
 
 ## Usage
 
@@ -115,6 +129,14 @@ git semver major
 
 If no version has been created, the initial version will be: **1.0.0**
 
+### Update
+
+See [Updates]
+
+``` bash
+git semver update
+```
+
 ### Help
 
 Run git semver with no arguments to see usage
@@ -123,28 +145,49 @@ Run git semver with no arguments to see usage
 git semver [help]
 ```
 
+## Configuration
+
+Configuration is stored in the file `${HOME}/.git-semver/config`. An example configuration file with the default settings can be found at [config.example].
+
 ## Updates
 
-Updates can be pulled down from github. Navigate to your original clone directory and run:
+The tool has a built in updater that checks for a new version of git semver
 
 ``` bash
-git pull
-# In Windows MinGW symlinks arent supported so rerun the installer
-sudo ./install.sh
+git semver update
 ```
 
+By default it will automatically check for a new version daily. The automatic check can be disabled by changing the [configuration](#configuration) setting:
+
+``` bash
+UPDATE_CHECK=0
+```
+
+The updaate check interval in days can be set by changing the [configuration](#configuration) setting:
+
+``` bash
+UPDATE_CHECK_INTERVAL_DAYS=1
+```
+
+The date of the last check is saved in `${HOME}/.git-semver/update`
+
 ## Uninstallation
+
+### Automatically
 
 Via uninstaller in clone directory. Navigate to your original clone directory and run:
 
 ``` bash
-sudo git-semver/uninstall.sh
+sudo git-semver/uninstall.sh [-p|--purge]
 ```
 
-Manually
+The purge switch will additionally remove the configuration directory.
 
-git-semver is installed by placing a symlink/copy in one of the bin directories in the path. 
+### Manually
 
+git-semver is installed by placing a symlink/stub in one of the bin directories in the path.
+
+- ${HOME}/bin
 - /usr/local/bin
 - /usr/bin
 - /bin
@@ -155,16 +198,23 @@ It can be deleted easily:
 sudo rm $(which git-semver)
 ```
 
+The configuration directory can be removed with:
+
+``` bash
+rm -rf ${HOME}/.git-semver
+```
+
 ## Change log
 
-Please see [CHANGELOG] for more information what has changed recently.
+Please see [CHANGELOG.md] for more information what has changed recently.
 
 ## Contributing
 
-Please see [CONTRIBUTING] for details.
+Please see [CONTRIBUTING.md] for details.
 
-[CHANGELOG]: CHANGELOG.md
-[CONTRIBUTING]: CONTRIBUTING.md
 [Semantic Versioning 2.0.0]: http://semver.org/spec/v2.0.0.html
 [Change Log Management]: http://keepachangelog.com/
 [Keep a CHANGELOG]: http://keepachangelog.com/
+[CHANGELOG.md]: CHANGELOG.md
+[CONTRIBUTING.md]: CONTRIBUTING.md
+[config.example]: config.example
