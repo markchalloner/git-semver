@@ -309,13 +309,75 @@ changelog-check() {
         echo -e "Error: no changelog ${links} for ${update_links_descs}. Please add the ${update_links_descs} ${links} at the bottom of the changelog: \n\n${update_links_lines}\n"
         status=1
     fi
-
     if [ ${status} -eq 1 ] && [ $(git rev-list --left-right @{u}... | grep "^>" | wc -l | sed 's/ //g') -gt 0 ]
     then
         echo -e "After making these changes, you can add your change log to your latest unpublished commit by running:\n\ngit add ${changelog}\ngit commit --amend -m '$(git log -1 --pretty=%B)'\n"
     fi
 
     return ${status}
+}
+
+########################################
+# Plugin functions
+########################################
+
+plugin-output() {
+    local file="$1"
+    while IFS='' read -r line
+    do
+        if [ -z "${PLUGIN_OUTPUT}" ]
+        then
+            echo -e "\n$file:\n"
+            PLUGIN_OUTPUT=1
+        fi
+        echo "  $line"
+    done
+}
+
+plugin-list() {
+    local dirs=("${DIR_HOME}" "${DIR_ROOT}")
+    local dir_plugin=
+    local plugins=()
+    for i in "${dirs[@]}"
+    do
+        dir_plugin="${i}/.git-semver/plugins"
+        if [ -d "${dir_plugin}" ]
+        then
+            plugins+=("$(find "${dir_plugin}" -maxdepth 1 -type f \( -perm -u=x -o -perm -g=x -o -perm -o=x \) -exec bash -c "[ -x {} ]" \; -print)")
+        fi
+    done
+    echo "$(join $'\n' "${plugins[@]}")"
+}
+
+plugin-run() {
+    local plugins="$(plugin-list)"
+    local version_new="2.0.0"
+    local version_current="1.2.2"
+    local git_hash="550c8eaa38e2ab3ac81362e2beba169fb4879acb"
+    local git_branch="master"
+    local git_root="${DIR_ROOT}"
+    for i in ${plugins}
+    do
+        PLUGIN_OUTPUT=
+        $i "${version_new}" "${version_current}" "${git_hash}" "${git_branch}" "${git_root}" | plugin-output "$i"
+        RETVAL=${PIPESTATUS[0]}
+        case ${RETVAL} in
+            0)
+                #echo No error in $(basename $i)
+                ;;
+            111|1)
+                #echo -e "\nError: Optional error in $(basename $i)"
+                ;;
+            112)
+                #echo -e "\n  Compulsory error in $(basename $i)"
+                ;;
+            113)
+                #echo -e "\n  Forced error in $(basename $i)"
+                return 1
+                ;;
+        esac
+    done
+
 }
 
 ########################################
@@ -403,18 +465,23 @@ version-patch() {
 # Run
 ########################################
 
+# Set home
+readonly DIR_HOME="${HOME}"
+
 # Set default config
 UPDATE_CHECK=1
 UPDATE_CHECK_INTERVAL_DAYS=1
 
 # Load user config
-if [ -f "${HOME}/.git-semver/config" ]
+if [ -f "${DIR_HOME}/.git-semver/config" ]
 then
-    source "${HOME}/.git-semver/config"
+    source "${DIR_HOME}/.git-semver/config"
 fi
 
 # Set vars
-DIR_DATA=${HOME}/.git-semver
+DIR_ROOT="$(git rev-parse --show-toplevel)"
+DIR_DATA=${DIR_HOME}/.git-semver
+
 FILE_CONF="${DIR_DATA}/config"
 FILE_UPDATE="${DIR_DATA}/update"
 
@@ -424,23 +491,19 @@ for ARG_LAST; do true; done
 
 case "$1" in
     get)
-        update-silent ${ARG_LAST}
         version-get
         ;;
     major)
-        update-silent ${ARG_LAST}
         version-major
         ;;
     minor)
-        update-silent ${ARG_LAST}
         version-minor
         ;;
     patch|next)
-        update-silent ${ARG_LAST}
         version-patch
         ;;
-    update)
-        update
+    debug)
+        plugin-run
         ;;
     help)
         usage
