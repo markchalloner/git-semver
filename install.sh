@@ -26,17 +26,10 @@ FILE_DEST="${DIR_BIN}/git-semver"
 FILE_CONF_SRC="${DIR_SELF}/config.example"
 FILE_CONF_DEST="${DIR_DATA}/config"
 
-# Windows MinGW uses a stub
-if [ -L "${FILE_DEST}" ] || ( [ ${OS_MINGW} -eq 0 ] && [ -f "${FILE_DEST}" ] )
-then
-    rm "${FILE_DEST}"
-fi
-
-
 # If MinGW
 if [ ${OS_MINGW} -eq 0 ]
 then
-    # Create a stub (tabs are important here)
+	# Create a stub, tabs are important for the heredoc
 	cat <<-EOF > "${FILE_DEST}"
 		#!/bin/bash
 
@@ -55,6 +48,10 @@ then
 	EOF
 # Otherwise
 else
+    if [ -L "${FILE_DEST}" ]
+    then
+        rm "${FILE_DEST}"
+    fi
     # Symlink
     ln -s "${FILE_SRC}" "${FILE_DEST}"
 fi
