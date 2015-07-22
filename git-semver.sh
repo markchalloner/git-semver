@@ -6,7 +6,7 @@
 
 usage() {
 	cat <<-EOF
-		Usage: $(basename $0 | tr '-' ' ' | sed 's/.sh$//g') [command]
+		Usage: $(basename-git "$0") [command]
 
 		This script automates semantic versioning. Requires a valid change log at CHANGELOG.md.
 
@@ -121,6 +121,10 @@ resolve-path() {
     echo "$path"
 }
 
+function basename-git() {
+    echo $(basename "$1" | tr '-' ' ' | sed 's/.sh$//g')
+}
+
 ########################################
 # Update functions
 ########################################
@@ -134,7 +138,7 @@ update-check() {
     local dir="$1"
     if [ -d "${dir}/.git" ]
     then
-        (cd ${dir} && git fetch)
+        (cd ${dir} && git fetch && git fetch --tags) > /dev/null 2>&1
         local version=$(git tag | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$" | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)
         if update-force-enabled || [ $(git rev-list --left-right HEAD...${version} | grep "^>" | wc -l | sed 's/ //g') -gt 0 ]
         then
@@ -155,8 +159,8 @@ update-silent() {
 update() {
     silent=$1
     local status=1
-
     local date_curr=$(date "+%Y-%m-%d")
+
     mkdir -p ${DIR_DATA}
     echo ${date_curr} > "${FILE_UPDATE}"
 
@@ -217,17 +221,12 @@ update() {
     do_update="$(echo ${RETVAL} | tr '[:upper:]' '[:lower:]')"
     if [ "${do_update}" == "y" ] || [ "${do_update}" == "yes" ]
     then
-        (cd ${dir} && git checkout ${version} && ./install.sh)
-        status=$?
-    fi
-
-    if [ -n "$silent" ] && [ ${status} -eq 0 ]
-    then
-        "$0" ${ARGS} ${ARG_NOUPDATE}
+        echo -e "Updating. Rerun your command with this new version:\n\n$(basename-git $0) ${ARGS}"
+        # Disown this subshell to allow this script to close and avoid permission denied errors due to file locking
+        ( sleep 1 && cd ${dir} && git checkout ${version} && ./install.sh ) &
+        disown
         exit
     fi
-
-    return ${status}
 }
 
 ########################################
@@ -255,7 +254,7 @@ changelog-check() {
     local tag_grep="\[${tag}\]"
     local tag_actual="[${tag}]"
     local tag_prev=
-    if [ "" == "$($0 get)" ]
+    if [ "" == "$(version-get)" ]
     then
         require_link=0
         tag_grep="${tag}"
@@ -310,7 +309,7 @@ changelog-check() {
         status=1
     fi
 
-    if [ ${status} -eq 1 ] && [ $(git rev-list --left-right @{u}... | grep "^>" | wc -l | sed 's/ //g') -gt 0 ]
+    if [ ${status} -eq 1 ] && git rev-list @{u}... > /dev/null 2>&1 && [ $(git rev-list --left-right @{u}... | grep "^>" | wc -l | sed 's/ //g') -gt 0 ]
     then
         echo -e "After making these changes, you can add your change log to your latest unpublished commit by running:\n\ngit add ${changelog}\ngit commit --amend -m '$(git log -1 --pretty=%B)'\n"
     fi

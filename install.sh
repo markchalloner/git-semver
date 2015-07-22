@@ -29,34 +29,23 @@ FILE_CONF_DEST="${DIR_DATA}/config"
 # If MinGW
 if [ ${OS_MINGW} -eq 0 ]
 then
-    # Disown this subshell to allow this script to close and avoid permission denied errors
-    (
-        sleep 1
-        if [ -f "${FILE_DEST}" ]
-        then
-            rm "${FILE_DEST}"
-        fi
+	# Tabs are important for the heredoc
+	cat <<-EOF > "${FILE_DEST}"
+		#!/bin/bash
 
-		# Tabs are important for the heredoc
-		cat <<-EOF > "${FILE_DEST}"
-			#!/bin/bash
-
-			FILE_SRC="${FILE_SRC}"
-			FILE_PREFIX=""
-			if uname -s | grep -q 'MINGW[^_]\+_NT'
-			then
-			    "\${FILE_SRC}" \$@
-			else
-			    if uname -s | grep -q 'CYGWIN_NT'
-			    then
-			       FILE_PREFIX="/cygdrive"
-			    fi
-			    echo -e "Error: This file is a stub designed to run under MinGW, please reinstall \$(basename "\$0") by running:\n\n  \${FILE_PREFIX}\$(dirname \${FILE_SRC})/install.sh"
-			fi
-		EOF
-
-    ) &
-    disown
+		FILE_SRC="${FILE_SRC}"
+		FILE_PREFIX=""
+		if uname -s | grep -q 'MINGW[^_]\+_NT'
+		then
+		    "\${FILE_SRC}" \$@
+		else
+		    if uname -s | grep -q 'CYGWIN_NT'
+		    then
+		       FILE_PREFIX="/cygdrive"
+		    fi
+		    echo -e "Error: This file is a stub designed to run under MinGW, please reinstall \$(basename "\$0") by running:\n\n  \${FILE_PREFIX}\$(dirname \${FILE_SRC})/install.sh"
+		fi
+	EOF
 # Otherwise
 else
     if [ -L "${FILE_DEST}" ]
