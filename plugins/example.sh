@@ -15,24 +15,24 @@ function run
     echo "Git top level directory: ${git_root}"
 
     # No error
-    return 0
+    #return 0
 
     # Optional error: continue processing plugins and apply version tag
-    #return 111
+    return 111
     #return 1
 
     # Compulsory error: continue processing plugins (to allow other generated errors) but stop before applying version tag
-    #return 112
+    return 112
 
     # Forced error: stop immediately
     #return 113
 }
 
 case "${1}" in
-    --about )
+    --about)
         echo -n "Check changelog has been updated along with code."
         ;;
-    * )
+    *)
         run "$@"
         ;;
 esac

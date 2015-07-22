@@ -41,7 +41,7 @@ usage() {
 #   red car
 #   blue bike
 #
-join() {
+function join() {
     local separator=$1
     local elements=$2
     shift 2 || shift $(($#))
@@ -230,153 +230,93 @@ update() {
 }
 
 ########################################
-# Changelog functions
-########################################
-
-changelog-check-enabled() {
-    [ -n "${CHANGELOG_CHECK}" ] && [ ${CHANGELOG_CHECK} -eq 1 ]
-    return $?
-}
-
-changelog-check() {
-    local tag=$1
-    local root=$(git rev-parse --show-toplevel)
-    local origin=$(git config --get remote.origin.url | sed 's#^\([^@]\+@\|https\?://\)\([^:/]\+\)[:/]\([^\.]\+\)\..*$#\2/\3#g')
-    local compareurl=https://${origin}/compare
-    local changelog=CHANGELOG.md
-    local status=0
-    local update_links_desc=()
-    local update_links_line=()
-    local update_links=0
-
-    # If there is no existing tag relax rules slightly
-    local require_link=1
-    local tag_grep="\[${tag}\]"
-    local tag_actual="[${tag}]"
-    local tag_prev=
-    if [ "" == "$(version-get)" ]
-    then
-        require_link=0
-        tag_grep="${tag}"
-        tag_actual="${tag}"
-    fi
-    tag_grep="$(echo "${tag_grep}" | sed 's#\.#\\.#g')"
-
-    if ! git show HEAD:${changelog} > /dev/null 2>&1
-    then
-        echo "Error: No changelog file found at ${root}/${changelog}"
-        return 1
-    fi
-
-    local changelog_content=$(git show HEAD:${changelog})
-    local changelog_tags=$(echo "${changelog_content}" | grep '^## \[\?[0-9]\+\.[0-9]\+\.[0-9]\]\? - ')
-
-    if ! echo "${changelog_content}" | grep -q "^## ${tag_grep} - [0-9]\{4\}-[0-9]\{2\}-[0-9]\{2\}"
-    then
-        echo -e "Error: no changelog details found for ${tag}. Change log should be recorded in ${changelog} with the format\n\n## ${tag_actual} - YYYY-MM-DD\n### Added\n- Details...\n\nSee http://keepachangelog.com/ for full format\n"
-        status=1
-        tag_prev=$(echo "${changelog_tags}" | head -n 1 | sed 's/^## \[\?\([0-9]\+\.[0-9]\+\.[0-9]\)\]\?.*$/\1/g')
-    else
-        tag_prev=$(echo "${changelog_tags}" | head -n 2 | tail -n 1 | sed 's/^## \[\?\([0-9]\+\.[0-9]\+\.[0-9]\)\]\?.*$/\1/g')
-    fi
-
-    if ! echo "${changelog_content}" | grep -q "^\[unreleased\]: ${compareurl}/${tag}\.\.\.HEAD$"
-    then
-        #echo -e "Error: no changelog link for unreleased. Please update the unreleased link at the bottom of the changelog to: \n\n[unreleased]: ${compareurl}/${tag}...HEAD\n"
-        update_links_desc+=("unreleased")
-        update_links_line+=("[unreleased]: ${compareurl}/${tag}...HEAD")
-        update_links=1
-    fi
-
-    if [ ${require_link} -eq 1 ] && ! echo "${changelog_content}" | grep -q "^\[${tag}\]: ${compareurl}/${tag_prev}\.\.\.${tag}$"
-    then
-        #echo -e "Error: no changelog link for ${tag}. Please add the ${tag} link at the bottom of the changelog: \n\n[${tag}]: ${compareurl}/${tag_prev}...${tag}\n"
-        update_links_desc+=("version ${tag}")
-        update_links_line+=("[${tag}]: ${compareurl}/${tag_prev}...${tag}")
-        update_links=1
-    fi
-
-    if [ ${update_links} -eq 1 ]
-    then
-        local update_links_descs=$(join " and " "${update_links_desc[@]}")
-        local update_links_lines=$(join $'\n' "${update_links_line[@]}")
-        local links="link"
-        if [ ${#update_links_desc[@]} -gt 1 ]
-        then
-            links+="s"
-        fi
-        echo -e "Error: no changelog ${links} for ${update_links_descs}. Please add the ${update_links_descs} ${links} at the bottom of the changelog: \n\n${update_links_lines}\n"
-        status=1
-    fi
-    if [ ${status} -eq 1 ] && git rev-list @{u}... > /dev/null 2>&1 && [ $(git rev-list --left-right @{u}... | grep "^>" | wc -l | sed 's/ //g') -gt 0 ]
-    then
-        echo -e "After making these changes, you can add your change log to your latest unpublished commit by running:\n\ngit add ${changelog}\ngit commit --amend -m '$(git log -1 --pretty=%B)'\n"
-    fi
-
-    return ${status}
-}
-
-########################################
 # Plugin functions
 ########################################
 
 plugin-output() {
-    local file="$1"
+    local type="$1"
+    local name="$2"
+    local output=
     while IFS='' read -r line
     do
-        if [ -z "${PLUGIN_OUTPUT}" ]
+        if [ -z "${output}" ]
         then
-            echo -e "\n$file:\n"
-            PLUGIN_OUTPUT=1
+            echo -e "\n$type plugin \"$name\":\n"
+            output=1
         fi
         echo "  $line"
     done
 }
 
 plugin-list() {
+    local types=("User" "Project")
     local dirs=("${DIR_HOME}" "${DIR_ROOT}")
-    local dir_plugin=
-    local plugins=()
-    for i in "${dirs[@]}"
+    local plugin_dir=
+    local plugin_type=
+    local total=${#dirs[*]}
+    for (( i=0; i <= $(( $total-1 )); i++ ))
     do
-        dir_plugin="${i}/.git-semver/plugins"
-        if [ -d "${dir_plugin}" ]
+        plugin_type=${types[${i}]}
+        plugin_dir="${dirs[${i}]}/.git-semver/plugins"
+        if [ -d "${plugin_dir}" ]
         then
-            plugins+=("$(find "${dir_plugin}" -maxdepth 1 -type f \( -perm -u=x -o -perm -g=x -o -perm -o=x \) -exec bash -c "[ -x {} ]" \; -print)")
+            find "${plugin_dir}" -maxdepth 1 -type f \( -perm -u=x -o -perm -g=x -o -perm -o=x \) -exec bash -c "[ -x {} ]" \; -printf "${plugin_type},%p \n"
         fi
     done
-    echo "$(join $'\n' "${plugins[@]}")"
 }
 
 plugin-run() {
     local plugins="$(plugin-list)"
-    local version_new="2.0.0"
-    local version_current="1.2.2"
-    local git_hash="550c8eaa38e2ab3ac81362e2beba169fb4879acb"
-    local git_branch="master"
-    local git_root="${DIR_ROOT}"
+    local version_new="$1"
+    local version_current="$2"
+    local status=1
+    local type=
+    local typel=
+    local path=
+    local fi;e=
+    local name=
     for i in ${plugins}
     do
-        PLUGIN_OUTPUT=
-        $i "${version_new}" "${version_current}" "${git_hash}" "${git_branch}" "${git_root}" | plugin-output "$i"
+        type=${i%%,*}
+        typel=$(echo ${type} | tr '[:upper:]' '[:lower:]')
+        path=${i##*,}
+        name=$(basename ${path})
+        #name=${file%.*}
+        ${path} "${version_new}" "${version_current}" "${GIT_HASH}" "${GIT_BRANCH}" "${DIR_ROOT}" | plugin-output "${type}" "${name}"
         RETVAL=${PIPESTATUS[0]}
         case ${RETVAL} in
             0)
-                #echo No error in $(basename $i)
                 ;;
             111|1)
-                #echo -e "\nError: Optional error in $(basename $i)"
+                echo -e "\nError: Optional error from ${typel} plugin \"${name}\", ignoring"
                 ;;
             112)
-                #echo -e "\n  Compulsory error in $(basename $i)"
+                echo -e "\nError: Error from ${typel} plugin \"${name}\", unable to version"
+                status=1
                 ;;
             113)
-                #echo -e "\n  Forced error in $(basename $i)"
+                echo -e "\nError: Fatal error from ${typel} plugin \"${name}\", unable to version, quitting immediately"
                 return 1
                 ;;
+            *)
+                echo -e "\nError: Unknown error from ${typel} plugin \"${name}\", ignoring"
         esac
     done
+    return ${status}
+}
 
+plugin-debug() {
+    local version=$(version-get)
+    local major=$(version-parse-major ${version})
+    local minor=$(version-parse-minor ${version})
+    local patch=$(version-parse-patch ${version})
+    if [ "" == "$version" ]
+    then
+        local new=0.1.0
+    else
+        local new=${major}.${minor}.$(($patch + 1))
+    fi
+    plugin-run "$new" "$version"
 }
 
 ########################################
@@ -403,13 +343,13 @@ version-parse-patch() {
 }
 
 version-get() {
-	local version=$(git tag | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$" | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)
-        if [ "" == "$version" ]
-        then
-            return 1
-        else
-            echo $version
-        fi
+    local version=$(git tag | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$" | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)
+    if [ "" == "$version" ]
+    then
+        return 1
+    else
+        echo $version
+    fi
 }
 
 version-major() {
@@ -421,10 +361,7 @@ version-major() {
     else
         local new=$((${major} + 1)).0.0
     fi
-    if ! changelog-check-enabled || changelog-check $new
-    then
-        git tag $new && echo $new
-    fi
+    version-do "$new" "$version"
 }
 
 version-minor() {
@@ -437,10 +374,7 @@ version-minor() {
     else
         local new=${major}.$((${minor} + 1)).0
     fi
-    if ! changelog-check-enabled || changelog-check $new
-    then
-        git tag $new && echo $new
-    fi
+    version-do "$new" "$version"
 }
 
 version-patch() {
@@ -454,9 +388,15 @@ version-patch() {
     else
         local new=${major}.${minor}.$(($patch + 1))
     fi
-    if ! changelog-check-enabled || changelog-check $new
+    version-do "$new" "$version"
+}
+
+version-do() {
+    local new="$1"
+    local version="$2"
+    if plugin-run "$new" "$version"
     then
-        git tag $new && echo $new
+        git tag "$new" && echo "$new"
     fi
 }
 
@@ -478,11 +418,14 @@ then
 fi
 
 # Set vars
-DIR_ROOT="$(git rev-parse --show-toplevel)"
+DIR_ROOT="$(git rev-parse --show-toplevel 2> /dev/null)"
 DIR_DATA=${DIR_HOME}/.git-semver
 
 FILE_CONF="${DIR_DATA}/config"
 FILE_UPDATE="${DIR_DATA}/update"
+
+GIT_HASH="$(git rev-parse HEAD 2> /dev/null)"
+GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2> /dev/null)"
 
 ARGS=$@
 ARG_NOUPDATE=noupdate
@@ -506,7 +449,7 @@ case "$1" in
         version-patch
         ;;
     debug)
-        plugin-run
+        plugin-debug
         ;;
     update)
         update
