@@ -26,35 +26,43 @@ FILE_DEST="${DIR_BIN}/git-semver"
 FILE_CONF_SRC="${DIR_SELF}/config.example"
 FILE_CONF_DEST="${DIR_DATA}/config"
 
-# Windows MinGW uses a stub
-if [ -L "${FILE_DEST}" ] || ( [ ${OS_MINGW} -eq 0 ] && [ -f "${FILE_DEST}" ] )
-then
-    rm "${FILE_DEST}"
-fi
-
-
 # If MinGW
 if [ ${OS_MINGW} -eq 0 ]
 then
-    # Create a stub (tabs are important here)
-	cat <<-EOF > "${FILE_DEST}"
-		#!/bin/bash
+    # Disown this subshell to allow this script to close and avoid permission denied errors
+    (
+        sleep 1
+        if [ -f "${FILE_DEST}" ]
+        then
+            rm "${FILE_DEST}"
+        fi
 
-		FILE_SRC="${FILE_SRC}"
-		FILE_PREFIX=""
-		if uname -s | grep -q 'MINGW[^_]\+_NT'
-		then
-		    "\${FILE_SRC}" \$@
-		else
-		    if uname -s | grep -q 'CYGWIN_NT'
-		    then
-		       FILE_PREFIX="/cygdrive"
-		    fi
-		    echo -e "Error: This file is a stub designed to run under MinGW, please reinstall \$(basename "\$0") by running:\n\n  \${FILE_PREFIX}\$(dirname \${FILE_SRC})/install.sh"
-		fi
-	EOF
+		# Tabs are important for the heredoc
+		cat <<-EOF > "${FILE_DEST}"
+			#!/bin/bash
+
+			FILE_SRC="${FILE_SRC}"
+			FILE_PREFIX=""
+			if uname -s | grep -q 'MINGW[^_]\+_NT'
+			then
+			    "\${FILE_SRC}" \$@
+			else
+			    if uname -s | grep -q 'CYGWIN_NT'
+			    then
+			       FILE_PREFIX="/cygdrive"
+			    fi
+			    echo -e "Error: This file is a stub designed to run under MinGW, please reinstall \$(basename "\$0") by running:\n\n  \${FILE_PREFIX}\$(dirname \${FILE_SRC})/install.sh"
+			fi
+		EOF
+
+    ) &
+    disown
 # Otherwise
 else
+    if [ -L "${FILE_DEST}" ]
+    then
+        rm "${FILE_DEST}"
+    fi
     # Symlink
     ln -s "${FILE_SRC}" "${FILE_DEST}"
 fi

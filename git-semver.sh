@@ -213,11 +213,11 @@ update() {
         return 0
     fi
 
-    get_input "New version ${version} found. Upgrade (y/n)?" "y"
-    do_upgrade="${RETVAL}"
-    if [ "${do_upgrade}" == "y" ]
+    get_input "New version ${version} found. Update (y/n)?" "y"
+    do_update="$(echo ${RETVAL} | tr '[:upper:]' '[:lower:]')"
+    if [ "${do_update}" == "y" ] || [ "${do_update}" == "yes" ]
     then
-        (cd ${dir} && git checkout ${version})
+        (cd ${dir} && git checkout ${version} && ./install.sh)
         status=$?
     fi
 
