@@ -1,17 +1,12 @@
-# Git Semver Plugin
+# Git Semantic Versioning Plugin
 
 ## Introduction
 
-A git plugin to make adherance to
+A git plugin to make adherance to [Semantic Versioning 2.0.0] easier, with a plugin architecture for optional version management of:
 
-- [Semantic Versioning 2.0.0]
-- [Change Log Management][Keep a CHANGELOG] (optional)
-
-easier.
-
-With its default settings, git semver requires a [CHANGELOG.md] file to be maintained. This will be need be filled for the version before the version is created.
-
-Change log management can be [disabled](#disabling) however this is **NOT recommended**.
+- [Keep a Changelog][Keep a CHANGELOG] [CHANGELOG.md] file
+- [NPM] [package.json] file
+- ...
 
 ### Semantic versioning
 
@@ -212,9 +207,11 @@ Please see [CHANGELOG.md] for more information what has changed recently.
 
 Please see [CONTRIBUTING.md] for details.
 
-[Semantic Versioning 2.0.0]: http://semver.org/spec/v2.0.0.html
-[Change Log Management]: http://keepachangelog.com/
-[Keep a CHANGELOG]: http://keepachangelog.com/
 [CHANGELOG.md]: CHANGELOG.md
+[Change Log Management]: http://keepachangelog.com/
 [CONTRIBUTING.md]: CONTRIBUTING.md
 [config.example]: config.example
+[Keep a CHANGELOG]: http://keepachangelog.com/
+[NPM]: https://www.npmjs.com/
+[package.json]: http://browsenpm.org/package.json
+[Semantic Versioning 2.0.0]: http://semver.org/spec/v2.0.0.html
