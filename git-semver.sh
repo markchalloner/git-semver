@@ -269,11 +269,11 @@ plugin-run() {
     local plugins="$(plugin-list)"
     local version_new="$1"
     local version_current="$2"
-    local status=1
+    local status=0
     local type=
     local typel=
     local path=
-    local fi;e=
+    local file=
     local name=
     for i in ${plugins}
     do
