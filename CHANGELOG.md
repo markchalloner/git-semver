@@ -5,6 +5,10 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
 
 ## [Unreleased][unreleased]
 
+## [2.0.1] - 2015-07-24
+### Fixes
+- Minor fixes to updater
+
 ## [2.0.0] - 2015-07-24
 ### Added
 - New plugin architecture. Changelog validation is now disabled by default.
@@ -58,7 +62,8 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
 [LICENCE.md]: LICENCE.md
 [README.md]: README.md
 
-[unreleased]: https://github.com/markchalloner/git-semver/compare/2.0.0...HEAD
+[unreleased]: https://github.com/markchalloner/git-semver/compare/2.0.1...HEAD
+[2.0.1]: https://github.com/markchalloner/git-semver/compare/2.0.0...2.0.1
 [2.0.0]: https://github.com/markchalloner/git-semver/compare/1.1.2...2.0.0
 [1.1.2]: https://github.com/markchalloner/git-semver/compare/1.1.1...1.1.2
 [1.1.1]: https://github.com/markchalloner/git-semver/compare/1.1.0...1.1.1
