@@ -181,6 +181,7 @@ Please see [CONTRIBUTING.md] for details.
 [Change Log Management]: http://keepachangelog.com/
 [CONTRIBUTING.md]: CONTRIBUTING.md
 [config.example]: config.example
+[Keep a CHANGELOG]: http://keepachangelog.com/
 [NPM]: https://www.npmjs.com/
 [package.json]: http://browsenpm.org/package.json
 [PLUGINS.md]: PLUGINS.md
