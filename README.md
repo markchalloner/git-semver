@@ -41,12 +41,14 @@ In Linux, OSX and Windows Cygwin the installer will create a symlink. In Windows
 
 ``` bash
 (git clone git@github.com:markchalloner/git-semver.git && \
-cd git-semver && \
-git checkout $(git tag | grep '^[0-9]\+\.[0-9]\+\.[0-9]\+$' | tail -n 1) && \
-sudo ./install.sh)
+cd git-semver && git checkout $(
+    git tag | grep '^[0-9]\+\.[0-9]\+\.[0-9]\+$' | \
+    sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -n 1
+) && sudo ./install.sh)
+
 ```
 
-The installer will not overwrite any existing [configuration](#configuration).
+The installer will not overwrite any existing [configuration](#configuration) or [plugins][PLUGINS.md].
 
 ## Usage
 
@@ -101,7 +103,7 @@ If no version has been created, the initial version will be: **1.0.0**
 See [Updates]
 
 ``` bash
-git semver update
+sudo git semver update
 ```
 
 ### Help

@@ -221,9 +221,12 @@ update() {
     do_update="$(echo ${RETVAL} | tr '[:upper:]' '[:lower:]')"
     if [ "${do_update}" == "y" ] || [ "${do_update}" == "yes" ]
     then
-        echo -e "Updating. Rerun your command with this new version:\n\n$(basename-git $0) ${ARGS}"
+        if [ -n "$silent" ]
+        then
+            echo -e "Updating. Rerun your command with this new version:\n\n$(basename-git $0) ${ARGS}"
+        fi
         # Disown this subshell to allow this script to close and avoid permission denied errors due to file locking
-        ( sleep 1 && cd ${dir} && git checkout ${version} && ./install.sh ) &
+        ( sleep 1 && cd ${dir} && git checkout ${version} > /dev/null 2>&1 && ./install.sh ) &
         disown
         exit
     fi
