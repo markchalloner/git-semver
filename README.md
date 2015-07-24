@@ -16,46 +16,9 @@ A git plugin to make adherance to [Semantic Versioning 2.0.0] easier, with a plu
   - Minor: Used for normal development, i.e. creating a new template
   - Bug fixes
 
-### Change log
+### Plugins
 
-A change log is a file which contains a curated, chronologically ordered list of notable changes for each version of a project.
-
-git-semver uses change log convention from [Keep a CHANGELOG](http://keepachangelog.com). A change log lists notable changes for each release of a project.
-
-For a new version to be generated, a change log must have already been commited which includes:
-
-- Details of the version (including version number and, date)
-- A list of changes under one or more of the headings:
-  - Added for new features.
-  - Changed for changes in existing functionality.
-  - Deprecated for once-stable features removed in upcoming releases.
-  - Removed for deprecated features removed in this release.
-  - Fixed for any bug fixes.
-  - Security to invite users to upgrade in case of vulnerabilities.
-- An updated unreleased link at the bottom of the file
-- A version link at the bottom of the file
-
-``` markdown
-## [{{version}}] - {{YYYY-MM-DD}}
-
-### Added
-- Details...
-
-...
-
-[unreleased]: https://github.com/oban/oban-site/compare/{{version}}...HEAD
-[{{version}}]: https://github.com/oban/oban-site/compare/{{previous version}}...{{version}}
-```
-
-See [Keep a CHANGELOG] for full details.
-
-#### Disabling
-
-Change log checking can be disabled by changing the [configuration](#configuration) setting:
-
-``` bash
-CHANGELOG_CHECK=0
-```
+For a full description of the plugins see [PLUGINS.md].
 
 ## Installation
 
@@ -214,4 +177,5 @@ Please see [CONTRIBUTING.md] for details.
 [Keep a CHANGELOG]: http://keepachangelog.com/
 [NPM]: https://www.npmjs.com/
 [package.json]: http://browsenpm.org/package.json
+[PLUGINS.md]: PLUGINS.md
 [Semantic Versioning 2.0.0]: http://semver.org/spec/v2.0.0.html
