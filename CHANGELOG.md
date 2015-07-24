@@ -5,8 +5,12 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
 
 ## [Unreleased][unreleased]
 
+## [2.0.2] - 2015-07-24
+### Fixed
+- More fixes to updater
+
 ## [2.0.1] - 2015-07-24
-### Fixes
+### Fixed
 - Minor fixes to updater
 
 ## [2.0.0] - 2015-07-24
@@ -62,7 +66,8 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
 [LICENCE.md]: LICENCE.md
 [README.md]: README.md
 
-[unreleased]: https://github.com/markchalloner/git-semver/compare/2.0.1...HEAD
+[unreleased]: https://github.com/markchalloner/git-semver/compare/2.0.2...HEAD
+[2.0.2]: https://github.com/markchalloner/git-semver/compare/2.0.1...2.0.2
 [2.0.1]: https://github.com/markchalloner/git-semver/compare/2.0.0...2.0.1
 [2.0.0]: https://github.com/markchalloner/git-semver/compare/1.1.2...2.0.0
 [1.1.2]: https://github.com/markchalloner/git-semver/compare/1.1.1...1.1.2

@@ -138,9 +138,9 @@ update-check() {
     local dir="$1"
     if [ -d "${dir}/.git" ]
     then
-        (cd ${dir} && git fetch && git fetch --tags) > /dev/null 2>&1
-        local version=$(git tag | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$" | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)
-        if update-force-enabled || [ $(git rev-list --left-right HEAD...${version} | grep "^>" | wc -l | sed 's/ //g') -gt 0 ]
+        (cd "${dir}" && git fetch && git fetch --tags) > /dev/null 2>&1
+        local version=$(cd "${dir}" && git tag | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$" | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)
+        if update-force-enabled || [ $(cd "${dir}" && git rev-list --left-right HEAD...${version} | grep "^>" | wc -l | sed 's/ //g') -gt 0 ]
         then
             echo ${version}
             return 0
