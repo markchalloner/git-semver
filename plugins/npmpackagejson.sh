@@ -1,5 +1,7 @@
 #!/bin/bash
 
+file="package.json"
+
 function run() {
     # Compulsory error: continue processing plugins (to allow other generated errors) but stop before applying version tag
     local error=112
@@ -9,7 +11,6 @@ function run() {
     local git_root="$5"
 
     local status=0
-    local file="package.json"
     local version_new_grep=$(echo ${version_new} | sed 's/\./\\\./g')
 
     local format="\"version\": \"${version_new}\","
@@ -39,7 +40,7 @@ function run() {
 
 case "${1}" in
     --about)
-        echo -n "Check changelog has been updated along with code."
+        echo -n "Check ${file} has been updated."
         ;;
     *)
         run "$@"

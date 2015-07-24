@@ -288,7 +288,7 @@ plugin-run() {
             0)
                 ;;
             111|1)
-                echo -e "\nError: Optional error from ${typel} plugin \"${name}\", ignoring"
+                echo -e "\nError: Warning from ${typel} plugin \"${name}\", ignoring"
                 ;;
             112)
                 echo -e "\nError: Error from ${typel} plugin \"${name}\", unable to version"

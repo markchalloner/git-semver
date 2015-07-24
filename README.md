@@ -1,12 +1,23 @@
-# Git Semantic Versioning Plugin
+# Git Semantic Versioning
+
+## Table Of Contents
+
+- [Introduction](#introduction)
+- [Installation](#installation)
+- [Plugins](#plugins)
+  - [Keep A Changelog](#keep-a-changelog)
+  - [NPM package.json](#npm-package-json)
+- [Contributing](#contributing)
 
 ## Introduction
 
-A git plugin to make adherance to [Semantic Versioning 2.0.0] easier, with a plugin architecture for optional version management of:
+A git plugin to make adherance to [Semantic Versioning 2.0.0] easier, with its own plugin architecture for optional version management of:
 
 - [Keep a Changelog][Keep a CHANGELOG] [CHANGELOG.md] file
 - [NPM] [package.json] file
 - ...
+
+See [PLUGINS.md] for a description of plugins.
 
 ### Semantic versioning
 
@@ -15,10 +26,6 @@ A git plugin to make adherance to [Semantic Versioning 2.0.0] easier, with a plu
   - Major: Used only for backward compatible breaking changes, i.e. when we have an all new theme etc.
   - Minor: Used for normal development, i.e. creating a new template
   - Bug fixes
-
-### Plugins
-
-For a full description of the plugins see [PLUGINS.md].
 
 ## Installation
 
@@ -162,7 +169,7 @@ The configuration directory can be removed with:
 rm -rf ${HOME}/.git-semver
 ```
 
-## Change log
+## Changelog
 
 Please see [CHANGELOG.md] for more information what has changed recently.
 
@@ -174,7 +181,6 @@ Please see [CONTRIBUTING.md] for details.
 [Change Log Management]: http://keepachangelog.com/
 [CONTRIBUTING.md]: CONTRIBUTING.md
 [config.example]: config.example
-[Keep a CHANGELOG]: http://keepachangelog.com/
 [NPM]: https://www.npmjs.com/
 [package.json]: http://browsenpm.org/package.json
 [PLUGINS.md]: PLUGINS.md

@@ -1,7 +1,9 @@
 #!/bin/bash
 
+file="CHANGELOG.md"
+
 function run() {
-    # Compulsory error: continue processing plugins (to allow other generated errors) but stop before applying version tag
+    # Error: continue processing plugins (to allow other generated errors) but stop before applying version tag
     local error=112
 
     local version_new="$1"
@@ -9,7 +11,6 @@ function run() {
     local git_root="$5"
 
     local status=0
-    local file="CHANGELOG.md"
     local git_origin=$(git config --get remote.origin.url | sed 's#^\([^@]\+@\|https\?://\)\([^:/]\+\)[:/]\([^\.]\+\)\..*$#\2/\3#g')
     local git_compare=https://${git_origin}/compare
 
@@ -96,7 +97,7 @@ function join() {
 
 case "${1}" in
     --about )
-        echo -n "Check file has been updated along with code."
+        echo -n "Check ${file} has been updated."
         ;;
     * )
         run "$@"
