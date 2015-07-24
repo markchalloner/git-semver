@@ -29,7 +29,7 @@ FILE_CONF_DEST="${DIR_DATA}/config"
 # If MinGW
 if [ ${OS_MINGW} -eq 0 ]
 then
-	# Tabs are important for the heredoc
+	# Create a stub, tabs are important for the heredoc
 	cat <<-EOF > "${FILE_DEST}"
 		#!/bin/bash
 

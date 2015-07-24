@@ -1,17 +1,23 @@
-# Git Semver Plugin
+# Git Semantic Versioning
+
+## Table Of Contents
+
+- [Introduction](#introduction)
+- [Installation](#installation)
+- [Plugins](#plugins)
+  - [Keep A Changelog](#keep-a-changelog)
+  - [NPM package.json](#npm-package-json)
+- [Contributing](#contributing)
 
 ## Introduction
 
-A git plugin to make adherance to
+A git plugin to make adherance to [Semantic Versioning 2.0.0] easier, with its own plugin architecture for optional version management of:
 
-- [Semantic Versioning 2.0.0]
-- [Change Log Management][Keep a CHANGELOG] (optional)
+- [Keep a Changelog][Keep a CHANGELOG] [CHANGELOG.md] file
+- [NPM] [package.json] file
+- ...
 
-easier.
-
-With its default settings, git semver requires a [CHANGELOG.md] file to be maintained. This will be need be filled for the version before the version is created.
-
-Change log management can be [disabled](#disabling) however this is **NOT recommended**.
+See [PLUGINS.md] for a description of plugins.
 
 ### Semantic versioning
 
@@ -20,47 +26,6 @@ Change log management can be [disabled](#disabling) however this is **NOT recomm
   - Major: Used only for backward compatible breaking changes, i.e. when we have an all new theme etc.
   - Minor: Used for normal development, i.e. creating a new template
   - Bug fixes
-
-### Change log
-
-A change log is a file which contains a curated, chronologically ordered list of notable changes for each version of a project.
-
-git-semver uses change log convention from [Keep a CHANGELOG](http://keepachangelog.com). A change log lists notable changes for each release of a project.
-
-For a new version to be generated, a change log must have already been commited which includes:
-
-- Details of the version (including version number and, date)
-- A list of changes under one or more of the headings:
-  - Added for new features.
-  - Changed for changes in existing functionality.
-  - Deprecated for once-stable features removed in upcoming releases.
-  - Removed for deprecated features removed in this release.
-  - Fixed for any bug fixes.
-  - Security to invite users to upgrade in case of vulnerabilities.
-- An updated unreleased link at the bottom of the file
-- A version link at the bottom of the file
-
-``` markdown
-## [{{version}}] - {{YYYY-MM-DD}}
-
-### Added
-- Details...
-
-...
-
-[unreleased]: https://github.com/oban/oban-site/compare/{{version}}...HEAD
-[{{version}}]: https://github.com/oban/oban-site/compare/{{previous version}}...{{version}}
-```
-
-See [Keep a CHANGELOG] for full details.
-
-#### Disabling
-
-Change log checking can be disabled by changing the [configuration](#configuration) setting:
-
-``` bash
-CHANGELOG_CHECK=0
-```
 
 ## Installation
 
@@ -204,7 +169,7 @@ The configuration directory can be removed with:
 rm -rf ${HOME}/.git-semver
 ```
 
-## Change log
+## Changelog
 
 Please see [CHANGELOG.md] for more information what has changed recently.
 
@@ -212,9 +177,11 @@ Please see [CHANGELOG.md] for more information what has changed recently.
 
 Please see [CONTRIBUTING.md] for details.
 
-[Semantic Versioning 2.0.0]: http://semver.org/spec/v2.0.0.html
-[Change Log Management]: http://keepachangelog.com/
-[Keep a CHANGELOG]: http://keepachangelog.com/
 [CHANGELOG.md]: CHANGELOG.md
+[Change Log Management]: http://keepachangelog.com/
 [CONTRIBUTING.md]: CONTRIBUTING.md
 [config.example]: config.example
+[NPM]: https://www.npmjs.com/
+[package.json]: http://browsenpm.org/package.json
+[PLUGINS.md]: PLUGINS.md
+[Semantic Versioning 2.0.0]: http://semver.org/spec/v2.0.0.html
