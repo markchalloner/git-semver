@@ -40,8 +40,10 @@ The installer installs git-semver into the first of the following directories th
 In Linux, OSX and Windows Cygwin the installer will create a symlink. In Windows MinGW creates a stub instead.
 
 ``` bash
-git clone git@github.com/markchalloner/git-semver.git
-sudo git-semver/install.sh
+(git clone git@github.com:markchalloner/git-semver.git && \
+cd git-semver && \
+git checkout $(git tag | grep '^[0-9]\+\.[0-9]\+\.[0-9]\+$' | tail -n 1) && \
+sudo ./install.sh)
 ```
 
 The installer will not overwrite any existing [configuration](#configuration).
@@ -181,6 +183,7 @@ Please see [CONTRIBUTING.md] for details.
 [Change Log Management]: http://keepachangelog.com/
 [CONTRIBUTING.md]: CONTRIBUTING.md
 [config.example]: config.example
+[Keep a CHANGELOG]: http://keepachangelog.com/
 [NPM]: https://www.npmjs.com/
 [package.json]: http://browsenpm.org/package.json
 [PLUGINS.md]: PLUGINS.md
