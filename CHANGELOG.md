@@ -58,7 +58,7 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
 [LICENCE.md]: LICENCE.md
 [README.md]: README.md
 
-[unreleased]: https://github.com/markchalloner/git-semver/compare/1.1.2...HEAD
+[unreleased]: https://github.com/markchalloner/git-semver/compare/2.0.0...HEAD
 [2.0.0]: https://github.com/markchalloner/git-semver/compare/1.1.2...2.0.0
 [1.1.2]: https://github.com/markchalloner/git-semver/compare/1.1.1...1.1.2
 [1.1.1]: https://github.com/markchalloner/git-semver/compare/1.1.0...1.1.1
