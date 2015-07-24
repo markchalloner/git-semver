@@ -103,7 +103,7 @@ If no version has been created, the initial version will be: **1.0.0**
 See [Updates]
 
 ``` bash
-sudo git semver update
+git semver update
 ```
 
 ### Help
