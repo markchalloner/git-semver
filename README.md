@@ -41,7 +41,8 @@ In Linux, OSX and Windows Cygwin the installer will create a symlink. In Windows
 
 ``` bash
 git clone git@github.com:markchalloner/git-semver.git
-(cd git-semver && git checkout $(git tag | grep '^[0-9]\+\.[0-9]\+\.[0-9]\+$' | tail -n 1) && sudo ./install.sh)
+cd git-semver && git checkout $(git tag | grep '^[0-9]\+\.[0-9]\+\.[0-9]\+$' | tail -n 1)
+sudo ./install.sh
 ```
 
 The installer will not overwrite any existing [configuration](#configuration).
