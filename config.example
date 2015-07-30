@@ -6,3 +6,21 @@ UPDATE_CHECK=1
 
 # Check for updated every X days
 UPDATE_CHECK_INTERVAL_DAYS=1
+
+# Change the version format
+
+# Just use the default
+# 3.2.1-beta.1.2+1072
+VERSION_FORMAT=
+
+# Add a prefix to the default
+# v3.2.1-beta.1.2+1072
+#VERSION_FORMAT="v"
+
+# Add a prefix and suffix to the default
+# "3.2.1-beta.1.2+1072"
+#VERSION_FORMAT="\"{{version}}\""
+
+# Specify exactly which components are printed
+# 3.2.1-beta.1.2+1072
+#VERSION_FORMAT="{{major}}.{{minor}}.{{patch}}{-{prerel}}{+{build}}"

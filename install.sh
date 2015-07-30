@@ -37,7 +37,7 @@ then
 		FILE_PREFIX=""
 		if uname -s | grep -q 'MINGW[^_]\+_NT'
 		then
-		    "\${FILE_SRC}" \$@
+		    "\${FILE_SRC}" "\$@"
 		else
 		    if uname -s | grep -q 'CYGWIN_NT'
 		    then
