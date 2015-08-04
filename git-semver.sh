@@ -1,5 +1,7 @@
 #!/bin/bash
 
+shopt -s extglob nullglob
+
 ########################################
 # Usage
 ########################################
@@ -157,6 +159,587 @@ function timer-start() {
 
 function timer-stop() {
     echo $(($(date '+%s')-${NOW})) >&2
+}
+
+########################################
+# Bash functions
+########################################
+
+function ifs-off() {
+    OLDIFS="${IFS}"
+    IFS=
+}
+
+function ifs-on() {
+    IFS="${OLDIFS}"
+}
+
+########################################
+# Var functions
+########################################
+
+function var-type() {
+    local var="${1}"
+    if   [ -z "${var//[0-9]/}" ]
+    then
+        RETVAL="int"
+    else
+        RETVAL="string"
+    fi
+}
+
+########################################
+# Math functions
+########################################
+
+function math-rand() {
+    local max=${1:-32767}
+    local min=${2:-0}
+    local tmp=
+    # Swap min/max if wrong order
+    if [ ${min} -gt ${max} ]
+    then
+        tmp=${min}
+        min=${max}
+        max=${tmp}
+    fi
+    range=$((max-min))
+    # Reseed the RNG
+    RANDOM=$$
+    RETVAL=$(((RANDOM%range)+min))
+}
+
+function math-range() {
+    local start=${1}
+    local end=${2}
+    if [ -z "${2}" ]
+    then
+        RETVAL=(${1})
+        return
+    fi
+    # Swap min/max if wrong order
+    if [ ${start} -gt ${end} ]
+    then
+        tmp=${start}
+        start=${end}
+        end=${tmp}
+    fi
+    # If only :(
+    #RETVAL=({${start}..${stop}})
+    RETVAL=()
+    for (( c=${start}; c<=${end}; c++ ))
+    do
+        RETVAL+=($c)
+    done
+}
+
+########################################
+# String function
+########################################
+
+function string-unquote() {
+    RETVAL="$1"
+    RETVAL="${RETVAL%\'}"
+    RETVAL="${RETVAL%\"}"
+    RETVAL="${RETVAL#\'}"
+    RETVAL="${RETVAL#\"}"
+}
+
+function string-escape() {
+    RETVAL="${1}"
+    RETVAL="${RETVAL/\(/\\(}"
+    RETVAL="${RETVAL/\+/\\+}"
+}
+
+function string-to-array() {
+    local string="${1}"
+    RETVAL=()
+    while IFS= read -r line
+    do
+        RETVAL+=("${line}")
+    done <<< "${string}"
+}
+
+function string-exists() {
+    local string="$1"
+    local search="$2"
+    string-replace "${string}" "${search}" "" true
+    if [ "${string}" != "${RETVAL}" ]
+    then
+        RETVAL=true
+        return 0
+    else
+        RETVAL=false
+        return 1
+    fi
+}
+
+function string-replace() {
+    local string="$1"
+    local search="$2"
+    local replace="$3"
+    local all=${4:-false}
+    if ${all}
+    then
+        RETVAL="${string//${search}/${replace}}"
+    else
+        RETVAL="${string/${search}/${replace}}"
+    fi
+}
+
+function string-match() {
+    local string="$1"
+    local search="$2"
+    local all=${3:-false}
+    local matches=()
+    local surrounding=
+    local removed=
+    local len_r1=
+    local len_r2=
+    local len_s=
+    local len=
+    while :
+    do
+        string-replace "${string}" "${search}" $'\n'
+        surrounding="${RETVAL}"
+        if [ "${string}" == "${surrounding}" ]
+        then
+            break
+        fi
+        removed=()
+        string-to-array "${surrounding}"
+        removed=("${RETVAL[@]}")
+        len_r1=${#removed[0]}
+        len_r2=${#removed[1]}
+        len_s=${#string}
+        len=$((len_s-(len_r1+len_r2)))
+        matches+=("${string:${len_r1}:${len}}")
+        string="${removed[0]}${removed[1]}"
+        if ! ${all}
+        then
+            break
+        fi
+    done
+    RETVAL=("${matches[@]}")
+    if [ ${#matches[@]} -gt 0 ]
+    then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function string-split() {
+    local string="$1"
+    local search="$2"
+    local all=${3:-false}
+    local matches=()
+    local surrounding=
+    local removed=
+    local len_r1=
+    local len_r2=
+    local len_s=
+    local len=
+    while :
+    do
+        string-replace "${string}" "${search}" $'\n'
+        surrounding="${RETVAL}"
+        if [ "${string}" == "${surrounding}" ]
+        then
+            matches+=("${string}")
+            break
+        fi
+        removed=()
+        string-to-array "${surrounding}"
+        removed=("${RETVAL[@]}")
+        len_r1=${#removed[0]}
+        len_r2=${#removed[1]}
+        len_s=${#string}
+        len=$((len_s-(len_r1+len_r2)))
+        matches+=("${removed[0]}")
+        matches+=("${string:${len_r1}:${len}}")
+        string="${removed[1]}"
+        if ! ${all}
+        then
+            matches+=("${string}")
+            break
+        fi
+    done
+    RETVAL=("${matches[@]}")
+    if [ ${#matches[@]} -gt 1 ]
+    then
+        return 0
+    else
+        return 1
+    fi
+}
+
+function string-compact() {
+    string-replace "${1}" $'\n'$'\n' $'\n' true
+
+}
+
+function string-first() {
+    local string="${1}"
+    RETVAL="${string%%$'\n'*}"
+}
+
+function string-last() {
+    local string="${1}"
+    RETVAL="${string##*$'\n'}"
+}
+
+function string-trim-trailing-newline() {
+    string="${1}"
+    RETVAL="${string%$'\n'}"
+}
+
+########################################
+# Array functions
+########################################
+
+function array-exists() {
+    local search="${1}"
+    local ARG2=("${!2}")
+    local string="${ARG2[@]}"
+    #echo string-exists " ${string} " " ${search} "
+    string-exists " ${string} " " ${search} "
+    # $?
+}
+
+function array-search() {
+    local needle="$1"
+    local ARG2=("${!2}")
+    local array=("${ARG2}")
+    for i in ${#array[@]}
+    do
+        if [ "${array[${i}]}" = "${needle}" ]
+        then
+            RETVAL="${i}"
+            return 0
+        fi
+    done
+    RETVAL="-1"
+    return 1
+}
+
+function array-join() {
+    local separator="${1}"
+    local ARG2=("${!2}")
+    local array=("${ARG2}")
+    local head="${array[0]}"
+    # Unfortunately MinGW doesn't slice arrays properly so we can't use tail=("${arr[@]:1}")
+    unset array[0]
+    tail=("${array[@]}")
+    # No built-in seperator
+    IFS= RETVAL="${head}${tail[@]/#/${separator}}"
+}
+
+function array-to-string() {
+    local ARG1=("${!1}")
+    array-join $'\n' "ARG1[@]"
+    # RETVAL
+}
+
+function array-compare-int() {
+    local pivot="${1}"
+    local empty_front=${2:-false}
+    local ARG3=("${!3}")
+    local ARG4=("${!4}")
+    local arr_key=("${ARG3[@]}")
+    local arr_val=("${ARG4[@]}")
+    RETKEY_F=()
+    RETVAL_F=()
+    RETKEY_L=()
+    RETVAL_L=()
+    RETKEY_E=()
+    RETVAL_E=()
+    RETKEY_G=()
+    RETVAL_G=()
+    RETKEY_B=()
+    RETVAL_B=()
+    for i in "${!arr_val[@]}"
+    do
+        if [ -z "${arr_val[${i}]}" ]
+        then
+            if ${empty_front}
+            then
+                RETKEY_F+=("${arr_key[${i}]}")
+                RETKEY_F+=("${arr_val[${i}]}")
+            else
+                RETKEY_B+=("${arr_key[${i}]}")
+                RETKEY_B+=("${arr_val[${i}]}")
+            fi
+        elif [ ${arr_val[${i}]} -lt ${pivot} ]
+        then
+            RETKEY_L+=("${arr_key[${i}]}")
+            RETVAL_L+=("${arr_val[${i}]}")
+        elif [ ${arr_val[${i}]} -gt ${pivot} ]
+        then
+            RETKEY_G+=("${arr_key[${i}]}")
+            RETVAL_G+=("${arr_val[${i}]}")
+        else
+            RETKEY_E+=("${arr_key[${i}]}")
+            RETVAL_E+=("${arr_val[${i}]}")
+        fi
+    done
+}
+
+function array-compare-string() {
+    local pivot="${1}"
+    local empty_front=${2:-false}
+    local ARG2=("${!3}")
+    local ARG3=("${!4}")
+    local arr_key=("${ARG2[@]}")
+    local arr_val=("${ARG3[@]}")
+    RETKEY_F=()
+    RETVAL_F=()
+    RETKEY_L=()
+    RETVAL_L=()
+    RETKEY_E=()
+    RETVAL_E=()
+    RETKEY_G=()
+    RETVAL_G=()
+    RETKEY_B=()
+    RETVAL_B=()
+    for i in "${!arr_val[@]}"
+    do
+        if [ -z "${arr_val[${i}]}" ]
+        then
+            if ${empty_front}
+            then
+                RETKEY_F+=("${arr_key[${i}]}")
+                RETKEY_F+=("${arr_val[${i}]}")
+            else
+                RETKEY_B+=("${arr_key[${i}]}")
+                RETKEY_B+=("${arr_val[${i}]}")
+            fi
+        elif [ "${arr_val[${i}]}" \< "${pivot}" ]
+        then
+            RETKEY_L+=("${arr_key[${i}]}")
+            RETVAL_L+=("${arr_val[${i}]}")
+        elif [ "${arr_val[${i}]}" \> "${pivot}" ]
+        then
+            RETKEY_G+=("${arr_key[${i}]}")
+            RETVAL_G+=("${arr_val[${i}]}")
+        else
+            RETKEY_E+=("${arr_key[${i}]}")
+            RETVAL_E+=("${arr_val[${i}]}")
+        fi
+    done
+}
+
+function array-quicksort() {
+    local ARG1=("${!1}")
+    local ARG3=("${!3}")
+    local i=
+    local arr_len=${#ARG1[@]}
+    local arr_val=("${ARG1[@]}")
+    local arr_key=(${ARG3[@]})
+    if [ "${#arr_key[@]}" -eq 0 ]
+    then
+        for ((i=0; i<arr_len; i++))
+        do
+            arr_key+=("${i}")
+        done
+    fi
+    local compare_func="${2:-array-compare-int}"
+    local arr_key_f=()
+    local arr_val_f=()
+    local arr_key_l=()
+    local arr_val_l=()
+    local arr_key_e=()
+    local arr_val_e=()
+    local arr_val_g=()
+    local arr_key_g=()
+    local arr_key_b=()
+    local arr_val_b=()
+    local pivot=
+    if [ ${arr_len} -le 1 ]
+    then
+        RETKEY=("${arr_key[@]}")
+        RETVAL=("${arr_val[@]}")
+    else
+        math-rand ${arr_len}
+        pivot="${arr_val[${RETVAL}]}"
+        ${compare_func} "${pivot}" false "arr_key[@]" "arr_val[@]"
+        arr_key_f=("${RETKEY_F[@]}")
+        arr_val_f=("${RETVAL_F[@]}")
+        arr_key_l=("${RETKEY_L[@]}")
+        arr_val_l=("${RETVAL_L[@]}")
+        arr_key_e=("${RETKEY_E[@]}")
+        arr_val_e=("${RETVAL_E[@]}")
+        arr_key_g=("${RETKEY_G[@]}")
+        arr_val_g=("${RETVAL_G[@]}")
+        arr_key_b=("${RETKEY_B[@]}")
+        arr_val_b=("${RETVAL_B[@]}")
+        array-quicksort "arr_val_l[@]" "${compare_func}" "arr_key_l[@]"
+        arr_key_l=("${RETKEY[@]}")
+        arr_val_l=("${RETVAL[@]}")
+        array-quicksort "arr_val_g[@]" "${compare_func}" "arr_key_g[@]"
+        arr_key_g=("${RETKEY[@]}")
+        arr_val_g=("${RETVAL[@]}")
+        RETKEY=("${arr_key_f[@]}" "${arr_key_l[@]}" "${arr_key_e[@]}" "${arr_key_g[@]}" "${arr_key_b[@]}")
+        RETVAL=("${arr_key_f[@]}" "${arr_key_l[@]}" "${arr_val_e[@]}" "${arr_val_g[@]}" "${arr_val_b[@]}")
+    fi
+}
+
+########################################
+# Matrix functions
+########################################
+
+function matrix-count-rows() {
+    local matrix="${1}"
+    local all=(${matrix//$'\n'/ })
+    local len=${#all[@]}
+    matrix-count-cols "${matrix}"
+    RETVAL=$((len/RETVAL))
+}
+
+function matrix-count-cols() {
+    string-first "${1}"
+    local first=(${RETVAL})
+    RETVAL=${#first[@]}
+}
+
+function matrix-get-rows() {
+    local matrix="${1}"
+    var-type "${2}"
+    if [ "${RETVAL}" == "string" ]
+    then
+        local ARG2=("${!2}")
+        local rows=("${ARG2[@]}")
+    else
+        math-range ${2} ${3}
+        local rows=("${RETVAL[@]}")
+    fi
+    local output=
+    local l=${#rows[@]}
+    local i=0
+    local c=0
+    local var=
+    while IFS=" " read -r line
+    do
+        if [ -z "${line}" ]
+        then
+            continue
+        fi
+        if array-exists "$i" "rows[@]"
+        then
+            # Fake array with variable indirection
+            declare "line_${i}"="${line}"
+            : $((c++))
+
+        fi
+        # If we have matched all the rows then break
+        if [ ${c} -ge ${l} ]
+        then
+            break
+        fi
+        : $((i++))
+    done <<< "${matrix}"
+    matrix=
+    for i in ${!rows[@]}
+    do
+        var="line_${rows[$i]}"
+        matrix+="${!var}"$'\n'
+    done
+    string-trim-trailing-newline "${matrix}"
+}
+
+function matrix-get-cols() {
+    local matrix="${1}"
+    var-type "${2}"
+    if [ "${RETVAL}" == "string" ]
+    then
+        local ARG2=("${!2}")
+        local cols=("${ARG2[@]}")
+    else
+        math-range ${2} ${3}
+        local cols=("${RETVAL[@]}")
+    fi
+    local array=
+    local output=
+    while IFS=" " read -r -a line
+    do
+        if [ -n "${line}" ]
+        then
+            array=()
+            for i in "${cols[@]}"
+            do
+                array+=(${line[${i}]})
+            done
+            output+="${array[@]}"$'\n'
+        fi
+    done <<< "${matrix}"
+    RETVAL="${output}"
+}
+
+function matrix-get() {
+    local matrix="${1}"
+    local row="${2:-0}"
+    local col="${3:-0}"
+    components-get-row "${matrix}" ${row}
+    RETVAL=${RETVAL[${col}]}
+}
+
+function matrix-set() {
+    local matrix="${1}"
+    local row="${2}"
+    local col="${3}"
+    local value="${4}"
+    local i=0
+    while IFS=" " read -r -a line
+    do
+        if [ ${i} -eq ${row} ];
+        then
+            line[${col}]='"'${value}'"'
+        fi
+        RETVAL+="${line[@]}"$'\n'
+        : $((i++))
+    done <<< "${matrix}"
+}
+
+function matrix-split-rows() {
+    local matrix="${1}"
+    local col="${2}"
+    local i=0
+    local var=
+    local prev=
+    local splits=()
+    while IFS=" " read -r -a line
+    do
+        if [ "${line[${col}]}" != "${prev}" ]
+        then
+            splits+=(${i})
+            prev="${line[${col}]}"
+        fi
+        : $((i++))
+    done <<< "${matrix}"
+    matrix-count-rows "${matrix}"
+    # Add the end if not already added
+    if [ ${splits[@]: -1} -lt ${RETVAL} ]
+    then
+        splits+=(${RETVAL})
+    fi
+    RETVAL=(${splits[@]})
+}
+
+function matrix-to-array() {
+    local matrix="${1}"
+    array=()
+    while IFS= read -r -a line
+    do
+        if [ -n "${line[@]}" ]
+        then
+            for i in ${line[@]}
+            do
+                string-unquote "${i}"
+                array+=("${RETVAL}")
+            done
+        fi
+    done <<< "${matrix}"
+    RETVAL=("${array[@]}")
 }
 
 ########################################
@@ -343,6 +926,255 @@ plugin-run() {
 }
 
 ########################################
+#
+########################################
+
+function version-format-to-tokens() {
+    RETVAL="${1}"
+    string-replace "${RETVAL}" "{"         $'\n'$'{'$'\n' true
+    string-replace "${RETVAL}" "}"         $'\n'$'}'$'\n' true
+}
+
+function version-matrix-to-string() {
+    local tokens="${1}"
+
+    string-unquote "${2}"
+    local major="${RETVAL}"
+    string-unquote "${3}"
+    local minor="${RETVAL}"
+    string-unquote "${4}"
+    local patch="${RETVAL}"
+    string-unquote "${5}"
+    local prerel="${RETVAL}"
+    string-unquote "${6}"
+    local build="${RETVAL}"
+
+    local version=
+    local counter=0
+    local direction=0
+    local prefix=
+    local suffix=
+    local var=
+
+    while IFS= read -r token
+    do
+        case "${token}" in
+            "{")
+                : $((counter++))
+                direction=1
+                ;;
+            "}")
+                : $((counter--))
+                direction=-1
+                ;;
+            *)
+                if [ ${counter} -eq 0 ]
+                then
+                    direction=0
+                fi
+        esac
+        case "${token}" in
+            "")
+                if [ ${counter} -eq 0 ]
+                then
+                    prefix=
+                    suffix=
+                fi
+                ;;
+            "major"|"minor"|"patch"|"prerel"|"build")
+                var=${!token}
+                ;;
+            "{")
+                ;;
+            "}")
+                if [ ${counter} -eq 0 ] && [ -n "${var}" ]
+                then
+                    version+="${prefix}${var}${suffix}"
+                fi
+                ;;
+            *)
+                case ${counter} in
+                    # Non var
+                    0)
+                        version+="${token}"
+                        ;;
+                    # Prefix or suffix
+                    1)
+                        if [ ${direction} -eq  1 ]
+                        then
+                            prefix="${token}"
+                        fi
+                        if [ ${direction} -eq -1 ]
+                        then
+                            suffix="${token}"
+                        fi
+                        ;;
+                    # Unknown var
+                    2)
+                        var=
+                        match=
+                        ;;
+                esac
+        esac
+        #printf "%-7s : %s : %2s : %s \n" "${token}" "${counter}" "${direction}" "${version}"
+    done <<< "${tokens}"
+    RETVAL="${version}"
+}
+
+function version-string-to-matrix() {
+    local tokens="${1}"
+    local version="${2}"
+
+    local counter=0
+    local direction=0
+    local prefix=
+    local suffix=
+    local var=
+    local match=
+
+    while IFS= read -r token
+    do
+        string-escape "${token}"
+        token="${RETVAL}"
+        case "${token}" in
+            "{")
+                : $((counter++))
+                direction=1
+                ;;
+            "}")
+                : $((counter--))
+                direction=-1
+                ;;
+            *)
+                if [ ${counter} -eq 0 ]
+                then
+                    direction=0
+                fi
+        esac
+        case "${token}" in
+            "")
+                if [ ${counter} -eq 0 ]
+                then
+                    prefix=
+                    suffix=
+                fi
+                ;;
+            "major"|"minor"|"patch")
+                var="${token}"
+                match="+([0-9])"
+                ;;
+            "prerel"|"build")
+                var="${token}"
+                match="+([0-9A-Za-z.])"
+                ;;
+            "{")
+                ;;
+            "}")
+                if [ ${counter} -eq 0 ] && [ -n "${var}" ]
+                then
+                    string-split "${version}" "${prefix}${match}${suffix}"
+                    if [ ${#RETVAL[@]} -gt 1 ]
+                    then
+                        version="${RETVAL[2]}"
+                        # Remove prefix and suffix
+                        string-split "${RETVAL[1]}" "${match}"
+                        declare "${var}"="${RETVAL[1]}"
+                    fi
+                fi
+                ;;
+            *)
+
+                case ${counter} in
+                    # Non var
+                    0)
+                        string-replace "${version}" "${token}"
+                        version="${RETVAL}"
+                        ;;
+                    # Prefix or suffix
+                    1)
+                        if [ ${direction} -eq  1 ]
+                        then
+                            prefix="${token}"
+                        fi
+                        if [ ${direction} -eq -1 ]
+                        then
+                            suffix="${token}"
+                        fi
+                        ;;
+                    # Unknown var
+                    2)
+                        var=
+                        match=
+                        ;;
+                esac
+        esac
+        #printf "%-7s : %s : %2s : %s \n" "${token}" "${counter}" "${direction}" "${version}"
+    done <<< "${tokens}"
+    RETVAL="\"${major}\" \"${minor}\" \"${patch}\" \"${prerel}\" \"${build}\""
+}
+
+function version-latest() {
+    local versions="${1}"
+    local matrix=
+    # Parse versions
+    while IFS= read -r line
+    do
+        if [ -n "${line}" ]
+        then
+            version-string-to-matrix "${VERSION_TOKENS}" "${line}"
+            matrix+="${RETVAL}"$'\n'
+        fi
+    done <<< "$versions"
+    string-trim-trailing-newline "${matrix}"
+    version-sort "${RETVAL}" 0 "array-compare-int" 1 "array-compare-int" 2 "array-compare-int" 3 "array-compare-string"
+    string-last "${RETVAL}"
+    version-matrix-to-string "${VERSION_TOKENS}" ${RETVAL}
+}
+
+function version-sort() {
+    local matrix="${1}"
+    local component=${2}
+    local compare="${3}"
+    shift
+    shift
+    shift
+    if [ -z "${component}" ] || [ -z "${compare}" ]
+    then
+        RETVAL="${matrix}"
+        return
+    fi
+    local i=
+    local start=
+    local end=
+    local splits=()
+    local splits_len=
+    matrix-get-cols "${matrix}" ${component}
+    matrix-to-array "${RETVAL}"
+    col=("${RETVAL[@]}")
+    array-quicksort "col[@]" "${compare}"
+    order=("${RETKEY[@]}")
+    matrix-get-rows "${matrix}" "order[@]"
+    matrix="${RETVAL}"
+    matrix-split-rows "${matrix}" ${component}
+    splits=(${RETVAL[@]})
+    splits_len=${#splits[@]}
+    local matrix_sorted=
+    for (( i=1; i<${splits_len}; i++ ))
+    do
+        start=${splits[$((i-1))]}
+        end=${splits[${i}]}
+        : $((end--))
+        matrix-get-rows "${matrix}" ${start} ${end}
+        version-sort "${RETVAL}" ${@}
+        string-trim-trailing-newline "${RETVAL}"
+        matrix_sorted+="${RETVAL}"$'\n'
+    done
+    string-trim-trailing-newline "${matrix_sorted}"
+}
+
+
+
+########################################
 # Version functions
 ########################################
 
@@ -379,7 +1211,7 @@ version-get() {
 # Takes an unsorted list of strings and a string version format
 #
 #
-version-latest() {
+version-latestx() {
     local format="${VERSION_FORMAT}"
     local strings="$(echo "${DEBUG_STRINGS}" | grep '[0-9]')"
     local limit=5
@@ -392,7 +1224,10 @@ version-latest() {
     done
     versions=$(strip-empty-lines "${versions}")
 
-    version-rotate "${versions}"
+    echo "${versions}"
+    echo "==="
+
+    #version-rotate "${versions}"
     return
 
     for i in {0..4}
@@ -423,7 +1258,9 @@ COMMENT
 }
 
 version-rotate() {
-    shift=1
+    local versions="$1"
+    local rotations=1 ; [ -n "$2" ] && rotations="$2"
+
     OLDIFS="${IFS}"
     IFS=$'\n'
     for i in ${versions}
@@ -434,7 +1271,7 @@ version-rotate() {
         do
             echo -n "${i} "
         done
-        echo -e "\n"
+        echo
     done
     IFS="${OLDIFS}"
 
@@ -506,14 +1343,13 @@ version-parse-2() {
     fi
 
     # Parse components out version
-    components=()
-    c=0
-    for j in "${VERSION_MATCHES[@]}"
+    #components=()
+    for i in "${!VERSION_MATCHES[@]}"
     do
-        components+=($(echo -n "${version}" | sed 's#'${j}'#\'${VERSION_CAPTURES[${c}]}'#g'))
-        : $((c++))
+        echo -n "${version}" | sed 's#'${VERSION_MATCHES[${i}]}'#'${VERSION_COMPONENTS_NAMES[${i}]}' \'${VERSION_CAPTURES[${i}]}'\n#g'
+        #components+=($(echo -n "${version}" | sed 's#'${VERSION_MATCHES[${i}]}'#'${VERSION_COMPONENTS_NAMES[${i}]}' \'${VERSION_CAPTURES[${i}]}'#g'))
     done
-    echo "${components[@]}"
+    #echo "${components[@]}"
 }
 
 version-major() {
@@ -837,21 +1673,22 @@ EOF
 VERSION_FORMAT="${VERSION_FORMAT_DEFAULT}"
 DEBUG_STRINGS="$(cat <<-'EOF'
 3.2.1
+3.2.1+3423
+3.2.1-alpha.1
+3.2.1-beta.2+3423
 1.2.3-alpha
 3.2.1-alpha
-3.2.1-alpha.1
 3.2.1-alpha.2
-3.2.1-beta
 1.2.3
+3.2.1-alpha.10
 3.2.1-beta.1+3423
 10.2.3
+3.2.1-beta
 10.2.4
 10.1.5-beta+1234
-3.2.1-beta.2+3423
 3.2.1-beta.2+3444
 EOF
 )"
-
 
 #
 # User config
@@ -877,9 +1714,14 @@ GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2> /dev/null)"
 # Caching
 #
 VERSION_FORMAT=$(version-format-resolve "${VERSION_FORMAT}" "VERSION_COMPONENTS_META_NAMES[@]" "VERSION_COMPONENTS_META_VALUES[@]" "VERSION_COMPONENTS_NAMES[@]")
-VERSION_MATCHES=($(version-matches "${VERSION_FORMAT}"))
-VERSION_CAPTURES=($(version-captures "${VERSION_FORMAT}"))
 
+version-format-to-tokens "${VERSION_FORMAT}"
+VERSION_TOKENS="${RETVAL}"
+
+#VERSION_MATCHES=($(version-matches "${VERSION_FORMAT}"))
+#for i in "${VERSION_MATCHES[@]}"; do echo "${i}"; done
+#exit
+#VERSION_CAPTURES=($(version-captures "${VERSION_FORMAT}"))
 #version=("3" "2" "1" "alpha" "2032")
 #VERSION_FORMAT=$(version-format-resolve "${VERSION_FORMAT}" "VERSION_COMPONENTS_NAMES[@]" "version[@]")
 #echo "${VERSION_FORMAT}"
@@ -909,7 +1751,8 @@ case "$1" in
         version-patch
         ;;
     debug)
-        version-latest
+        version-latest "${DEBUG_STRINGS}"
+        echo "${RETVAL}"
         ;;
     format)
         shift
