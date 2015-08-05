@@ -1,5 +1,6 @@
 #!/bin/bash
 
+readonly DEBUG_BENCHMARK_START=$(date '+%s')
 shopt -s extglob nullglob
 
 ########################################
@@ -153,12 +154,18 @@ function basename-git() {
     echo $(basename "$1" | tr '-' ' ' | sed 's/.sh$//g')
 }
 
-function timer-start() {
-    NOW=$(date '+%s')
-}
-
-function timer-stop() {
-    echo $(($(date '+%s')-${NOW})) >&2
+function debug-benchmark() {
+    # Noop if not debugging
+    [ ! $DEBUG ] && return
+    DEBUG_BENCHMARK=${DEBUG_BENCHMARK:-DEBUG_BENCHMARK_START}
+    local secs=$(($(date '+%s')-${DEBUG_BENCHMARK}))
+    local plural=
+    if [ ${secs} -ne 1 ]
+    then
+        plural=s
+    fi
+    echo "Time: ${secs} second${plural}" >&2
+    DEBUG_BENCHMARK=$(date '+%s')
 }
 
 ########################################
@@ -180,12 +187,17 @@ function ifs-on() {
 
 function var-type() {
     local var="${1}"
-    if   [ -z "${var//[0-9]/}" ]
+    if [ -n "${var}" ] && [ -z "${var//[0-9]/}" ]
     then
         RETVAL="int"
     else
         RETVAL="string"
     fi
+}
+
+function var-is-int() {
+    var-type "${1}"
+    [ "$RETVAL" == "int" ]
 }
 
 ########################################
@@ -329,6 +341,61 @@ function string-match() {
     fi
 }
 
+function string-count-lines() {
+    local string="${1}"
+    local lines=()
+    while IFS= read -r line
+    do
+        lines+=(${line})
+    done <<< "${string// /\ }"
+    RETVAL=${#lines[@]}
+}
+
+function string-get-lines() {
+    local string="${1}"
+    var-type "${2}"
+    if [ "${RETVAL}" == "string" ]
+    then
+        local ARG2=("${!2}")
+        local rows=("${ARG2[@]}")
+    else
+        math-range ${2} ${3}
+        local rows=("${RETVAL[@]}")
+    fi
+    local output=
+    local l=${#rows[@]}
+    local i=0
+    local c=0
+    local var=
+    while IFS=" " read -r line
+    do
+        if [ -z "${line}" ]
+        then
+            continue
+        fi
+        if array-exists "$i" "rows[@]"
+        then
+            # Fake array with variable indirection
+            declare "line_${i}"="${line}"
+            : $((c++))
+
+        fi
+        # If we have matched all the rows then break
+        if [ ${c} -ge ${l} ]
+        then
+            break
+        fi
+        : $((i++))
+    done <<< "${string}"
+    string=
+    for i in ${!rows[@]}
+    do
+        var="line_${rows[$i]}"
+        string+="${!var}"$'\n'
+    done
+    string-trim-trailing-newline "${string}"
+}
+
 function string-split() {
     local string="$1"
     local search="$2"
@@ -376,7 +443,6 @@ function string-split() {
 
 function string-compact() {
     string-replace "${1}" $'\n'$'\n' $'\n' true
-
 }
 
 function string-first() {
@@ -392,6 +458,82 @@ function string-last() {
 function string-trim-trailing-newline() {
     string="${1}"
     RETVAL="${string%$'\n'}"
+}
+
+function string-repeat() {
+    string="${1}"
+    number=${2: -1}
+    separator="${3}"
+    RETVAL=()
+    local i=
+    for (( i=0; i<${number}; i++ ))
+    do
+        if [ ${i} -ne 0 ]
+        then
+            RETVAL+="${separator}"
+        fi
+        RETVAL+="${string}"
+    done
+}
+
+########################################
+# Comparison functions
+########################################
+
+function compare-int() {
+    if [ ${1} -lt ${2} ]
+    then
+        RETVAL=-1
+    elif [ ${1} -gt ${2} ]
+    then
+        RETVAL=1
+    else
+        RETVAL=0
+    fi
+}
+
+function compare-string() {
+    if [ "${1}" \< "${2}" ]
+    then
+        RETVAL=-1
+    elif [ "${1}" \> "${2}" ]
+    then
+        RETVAL=1
+    else
+        RETVAL=0
+    fi
+}
+
+function compare-prerel() {
+    local string_1="${1}"
+    local string_2="${2}"
+    string_1="${string_1//./$'\n'}"
+    string_2="${string_2//./$'\n'}"
+    string-count-lines "${string_1}"
+    local string_1_len="${RETVAL}"
+    string-count-lines "${string_2}"
+    local string_2_len="${RETVAL}"
+    local line_1=
+    local line_2=
+    local max_len=$((string_1_len > string_2_len ? string_1_len : string_2_len))
+    local i=
+    local compare_val=
+    for (( i=0; i<max_len; i++))
+    do
+        string-get-lines "${string_1}" $i
+        line_1="${RETVAL}"
+        string-get-lines "${string_2}" $i
+        line_2="${RETVAL}"
+        if var-is-int "${line_1}" && var-is-int "${line_2}"
+        then
+            compare-int ${line_1} ${line_2}
+            [ ${RETVAL} -ne 0 ] && return
+        else
+            compare-string "${line_1}" "${line_2}"
+            [ ${RETVAL} -ne 0 ] && return
+       fi
+    done
+    RETVAL=0
 }
 
 ########################################
@@ -441,13 +583,17 @@ function array-to-string() {
     # RETVAL
 }
 
-function array-compare-int() {
-    local pivot="${1}"
-    local empty_front=${2:-false}
+function array-compare() {
+    local compare="${1}"
+    local pivot="${2}"
     local ARG3=("${!3}")
     local ARG4=("${!4}")
     local arr_key=("${ARG3[@]}")
     local arr_val=("${ARG4[@]}")
+    local empty_front=${5:-false}
+    local compare_val=
+    local i=
+    RETVAL=
     RETKEY_F=()
     RETVAL_F=()
     RETKEY_L=()
@@ -470,61 +616,21 @@ function array-compare-int() {
                 RETKEY_B+=("${arr_key[${i}]}")
                 RETKEY_B+=("${arr_val[${i}]}")
             fi
-        elif [ ${arr_val[${i}]} -lt ${pivot} ]
-        then
-            RETKEY_L+=("${arr_key[${i}]}")
-            RETVAL_L+=("${arr_val[${i}]}")
-        elif [ ${arr_val[${i}]} -gt ${pivot} ]
-        then
-            RETKEY_G+=("${arr_key[${i}]}")
-            RETVAL_G+=("${arr_val[${i}]}")
         else
-            RETKEY_E+=("${arr_key[${i}]}")
-            RETVAL_E+=("${arr_val[${i}]}")
-        fi
-    done
-}
-
-function array-compare-string() {
-    local pivot="${1}"
-    local empty_front=${2:-false}
-    local ARG2=("${!3}")
-    local ARG3=("${!4}")
-    local arr_key=("${ARG2[@]}")
-    local arr_val=("${ARG3[@]}")
-    RETKEY_F=()
-    RETVAL_F=()
-    RETKEY_L=()
-    RETVAL_L=()
-    RETKEY_E=()
-    RETVAL_E=()
-    RETKEY_G=()
-    RETVAL_G=()
-    RETKEY_B=()
-    RETVAL_B=()
-    for i in "${!arr_val[@]}"
-    do
-        if [ -z "${arr_val[${i}]}" ]
-        then
-            if ${empty_front}
+            ${compare} "${arr_val[${i}]}" "${pivot}"
+            compare_val=${RETVAL}
+            if   [ ${compare_val} -eq -1 ]
             then
-                RETKEY_F+=("${arr_key[${i}]}")
-                RETKEY_F+=("${arr_val[${i}]}")
+                RETKEY_L+=("${arr_key[${i}]}")
+                RETVAL_L+=("${arr_val[${i}]}")
+            elif [ ${compare_val} -eq 1  ]
+            then
+                RETKEY_G+=("${arr_key[${i}]}")
+                RETVAL_G+=("${arr_val[${i}]}")
             else
-                RETKEY_B+=("${arr_key[${i}]}")
-                RETKEY_B+=("${arr_val[${i}]}")
+                RETKEY_E+=("${arr_key[${i}]}")
+                RETVAL_E+=("${arr_val[${i}]}")
             fi
-        elif [ "${arr_val[${i}]}" \< "${pivot}" ]
-        then
-            RETKEY_L+=("${arr_key[${i}]}")
-            RETVAL_L+=("${arr_val[${i}]}")
-        elif [ "${arr_val[${i}]}" \> "${pivot}" ]
-        then
-            RETKEY_G+=("${arr_key[${i}]}")
-            RETVAL_G+=("${arr_val[${i}]}")
-        else
-            RETKEY_E+=("${arr_key[${i}]}")
-            RETVAL_E+=("${arr_val[${i}]}")
         fi
     done
 }
@@ -543,7 +649,7 @@ function array-quicksort() {
             arr_key+=("${i}")
         done
     fi
-    local compare_func="${2:-array-compare-int}"
+    local compare="${2:-compare-int}"
     local arr_key_f=()
     local arr_val_f=()
     local arr_key_l=()
@@ -562,7 +668,7 @@ function array-quicksort() {
     else
         math-rand ${arr_len}
         pivot="${arr_val[${RETVAL}]}"
-        ${compare_func} "${pivot}" false "arr_key[@]" "arr_val[@]"
+        array-compare "${compare}" "${pivot}" "arr_key[@]" "arr_val[@]"
         arr_key_f=("${RETKEY_F[@]}")
         arr_val_f=("${RETVAL_F[@]}")
         arr_key_l=("${RETKEY_L[@]}")
@@ -573,10 +679,10 @@ function array-quicksort() {
         arr_val_g=("${RETVAL_G[@]}")
         arr_key_b=("${RETKEY_B[@]}")
         arr_val_b=("${RETVAL_B[@]}")
-        array-quicksort "arr_val_l[@]" "${compare_func}" "arr_key_l[@]"
+        array-quicksort "arr_val_l[@]" "${compare}" "arr_key_l[@]"
         arr_key_l=("${RETKEY[@]}")
         arr_val_l=("${RETVAL[@]}")
-        array-quicksort "arr_val_g[@]" "${compare_func}" "arr_key_g[@]"
+        array-quicksort "arr_val_g[@]" "${compare}" "arr_key_g[@]"
         arr_key_g=("${RETKEY[@]}")
         arr_val_g=("${RETVAL[@]}")
         RETKEY=("${arr_key_f[@]}" "${arr_key_l[@]}" "${arr_key_e[@]}" "${arr_key_g[@]}" "${arr_key_b[@]}")
@@ -593,7 +699,12 @@ function matrix-count-rows() {
     local all=(${matrix//$'\n'/ })
     local len=${#all[@]}
     matrix-count-cols "${matrix}"
-    RETVAL=$((len/RETVAL))
+    if [ ${RETVAL} -eq 0 ]
+    then
+        RETVAL=${len}
+    else
+        RETVAL=$((len/RETVAL))
+    fi
 }
 
 function matrix-count-cols() {
@@ -603,48 +714,7 @@ function matrix-count-cols() {
 }
 
 function matrix-get-rows() {
-    local matrix="${1}"
-    var-type "${2}"
-    if [ "${RETVAL}" == "string" ]
-    then
-        local ARG2=("${!2}")
-        local rows=("${ARG2[@]}")
-    else
-        math-range ${2} ${3}
-        local rows=("${RETVAL[@]}")
-    fi
-    local output=
-    local l=${#rows[@]}
-    local i=0
-    local c=0
-    local var=
-    while IFS=" " read -r line
-    do
-        if [ -z "${line}" ]
-        then
-            continue
-        fi
-        if array-exists "$i" "rows[@]"
-        then
-            # Fake array with variable indirection
-            declare "line_${i}"="${line}"
-            : $((c++))
-
-        fi
-        # If we have matched all the rows then break
-        if [ ${c} -ge ${l} ]
-        then
-            break
-        fi
-        : $((i++))
-    done <<< "${matrix}"
-    matrix=
-    for i in ${!rows[@]}
-    do
-        var="line_${rows[$i]}"
-        matrix+="${!var}"$'\n'
-    done
-    string-trim-trailing-newline "${matrix}"
+    string-get-lines "$@"
 }
 
 function matrix-get-cols() {
@@ -717,6 +787,11 @@ function matrix-split-rows() {
         : $((i++))
     done <<< "${matrix}"
     matrix-count-rows "${matrix}"
+    # If empty
+    if [ ${#splits[@]} -eq 0 ]
+    then
+        splits+=(0)
+    fi
     # Add the end if not already added
     if [ ${splits[@]: -1} -lt ${RETVAL} ]
     then
@@ -1113,24 +1188,6 @@ function version-string-to-matrix() {
     RETVAL="\"${major}\" \"${minor}\" \"${patch}\" \"${prerel}\" \"${build}\""
 }
 
-function version-latest() {
-    local versions="${1}"
-    local matrix=
-    # Parse versions
-    while IFS= read -r line
-    do
-        if [ -n "${line}" ]
-        then
-            version-string-to-matrix "${VERSION_TOKENS}" "${line}"
-            matrix+="${RETVAL}"$'\n'
-        fi
-    done <<< "$versions"
-    string-trim-trailing-newline "${matrix}"
-    version-sort "${RETVAL}" 0 "array-compare-int" 1 "array-compare-int" 2 "array-compare-int" 3 "array-compare-string"
-    string-last "${RETVAL}"
-    version-matrix-to-string "${VERSION_TOKENS}" ${RETVAL}
-}
-
 function version-sort() {
     local matrix="${1}"
     local component=${2}
@@ -1161,18 +1218,35 @@ function version-sort() {
     local matrix_sorted=
     for (( i=1; i<${splits_len}; i++ ))
     do
+        nl=
         start=${splits[$((i-1))]}
         end=${splits[${i}]}
         : $((end--))
         matrix-get-rows "${matrix}" ${start} ${end}
         version-sort "${RETVAL}" ${@}
-        string-trim-trailing-newline "${RETVAL}"
-        matrix_sorted+="${RETVAL}"$'\n'
+        [ "${RETVAL}" != "" ] && nl=$'\n'
+        matrix_sorted+="${RETVAL}"${nl}
     done
     string-trim-trailing-newline "${matrix_sorted}"
 }
 
-
+function version-latest() {
+    local versions="${1}"
+    local matrix=
+    # Parse versions
+    while IFS= read -r line
+    do
+        if [ -n "${line}" ]
+        then
+            version-string-to-matrix "${VERSION_TOKENS}" "${line}"
+            matrix+="${RETVAL}"$'\n'
+        fi
+    done <<< "$versions"
+    string-trim-trailing-newline "${matrix}"
+    version-sort "${RETVAL}" 0 "compare-int" 1 "compare-int" 2 "compare-int" 3 "compare-prerel"
+    string-last "${RETVAL}"
+    version-matrix-to-string "${VERSION_TOKENS}" ${RETVAL}
+}
 
 ########################################
 # Version functions
@@ -1629,6 +1703,7 @@ version-captures() {
 #
 # Readonly vars
 #
+readonly DEBUG=true
 readonly DIR_HOME="${HOME}"
 readonly VERSION_COMPONENTS_NAMES=("major" "minor" "patch" "prerel" "build")
 readonly VERSION_COMPONENTS_META_NAMES=(  "version"                                            )
