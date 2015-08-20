@@ -187,7 +187,8 @@ function ifs-on() {
 
 function var-type() {
     local var="${1}"
-    if [ -n "${var}" ] && [ -z "${var//[0-9]/}" ]
+    local empty_is_int=${2:-false}
+    if ${empty_is_int} || [ -n "${var}" ] && [ -z "${var//[0-9]/}" ]
     then
         RETVAL="int"
     else
@@ -341,6 +342,16 @@ function string-match() {
     fi
 }
 
+function string-count-chars() {
+    local str1="${1}"
+    local char="${2}"
+    string-replace "${str1}" "${char}" "" true
+    local str2="${RETVAL}"
+    local str1_len=${#str1}
+    local str2_len=${#str2}
+    RETVAL=$((str1_len-str2_len))
+}
+
 function string-count-lines() {
     local string="${1}"
     local lines=()
@@ -358,42 +369,55 @@ function string-get-lines() {
     then
         local ARG2=("${!2}")
         local rows=("${ARG2[@]}")
+        local row=
+        local lines=()
+        local sed_args=()
+        local max=
+        local i=
+        for i in "${!rows[@]}"
+        do
+            # Ignore empties
+            if [ -z "${rows[${i}]}" ]
+            then
+                continue
+            fi
+            # Bump zero-index to line number
+            row=$((rows[${i}]+1))
+            max=$((row > max ? row : max))
+            # If this row is less than the max or max is undefined
+            if [ ${row} -lt ${max} ]
+            then
+                # Create args
+                array-join 'p;' "lines[@]"
+                # Save args into a chunk
+                sed_args+=("${RETVAL}p;d;q")
+                # Reset lines and max
+                lines=()
+                max=1
+            fi
+            lines+=("${row}")
+        done
+        array-join 'p;' "lines[@]"
+        sed_args+=("${RETVAL}p;d;q")
+        RETVAL=
+        for i in "${!sed_args[@]}"
+        do
+           RETVAL+=$(sed -ne "${sed_args[${i}]}" <<< "${string}")$'\n'
+        done
+        string-trim-trailing-newline "${RETVAL}"
     else
-        math-range ${2} ${3}
-        local rows=("${RETVAL[@]}")
+        local start=${2}
+        local end=${3}
+        local num=1
+        if [ -n "${end}" ]
+        then
+            num=$((end-start+1))
+        fi
+        # Bump zero-index to line number
+        : $((start++))
+        : $((end++))
+        RETVAL=$(tail -n+${start} <<< "${string}" | head -n ${num})
     fi
-    local output=
-    local l=${#rows[@]}
-    local i=0
-    local c=0
-    local var=
-    while IFS=" " read -r line
-    do
-        if [ -z "${line}" ]
-        then
-            continue
-        fi
-        if array-exists "$i" "rows[@]"
-        then
-            # Fake array with variable indirection
-            declare "line_${i}"="${line}"
-            : $((c++))
-
-        fi
-        # If we have matched all the rows then break
-        if [ ${c} -ge ${l} ]
-        then
-            break
-        fi
-        : $((i++))
-    done <<< "${string}"
-    string=
-    for i in ${!rows[@]}
-    do
-        var="line_${rows[$i]}"
-        string+="${!var}"$'\n'
-    done
-    string-trim-trailing-newline "${string}"
 }
 
 function string-split() {
@@ -456,14 +480,14 @@ function string-last() {
 }
 
 function string-trim-trailing-newline() {
-    string="${1}"
+    local string="${1}"
     RETVAL="${string%$'\n'}"
 }
 
 function string-repeat() {
-    string="${1}"
-    number=${2: -1}
-    separator="${3}"
+    local string="${1}"
+    local number=${2:-1}
+    local separator="${3}"
     RETVAL=()
     local i=
     for (( i=0; i<${number}; i++ ))
@@ -568,18 +592,24 @@ function array-search() {
 function array-join() {
     local separator="${1}"
     local ARG2=("${!2}")
-    local array=("${ARG2}")
+    local array=("${ARG2[@]}")
     local head="${array[0]}"
-    # Unfortunately MinGW doesn't slice arrays properly so we can't use tail=("${arr[@]:1}")
-    unset array[0]
-    tail=("${array[@]}")
-    # No built-in seperator
-    IFS= RETVAL="${head}${tail[@]/#/${separator}}"
+    local tail=("${array[@]:1}")
+    # Set IFS to empty
+    local ifs="${IFS}"
+    IFS=
+    # Add separator around and between elements
+    RETVAL="${head}${tail[@]/#/${separator}}"
+    # Remove space before separator
+    RETVAL="${RETVAL// ${separator}/${separator}}"
+    # Restore IFS
+    IFS="${ifs}"
 }
 
 function array-to-string() {
     local ARG1=("${!1}")
-    array-join $'\n' "ARG1[@]"
+    local array=("${ARG1[@]}")
+    array-join $'\n' "array[@]"
     # RETVAL
 }
 
@@ -635,6 +665,56 @@ function array-compare() {
     done
 }
 
+function array-sort() {
+    local ARG1=("${!1}")
+    local ARG3=("${!3}")
+    local i=
+    local arr_len=${#ARG1[@]}
+    local arr_val=("${ARG1[@]}")
+    local arr_key=(${ARG3[@]})
+    local arr_key_empty=()
+    local arr_val_empty=()
+    if [ ${arr_len} -eq 0 ]
+    then
+        RETKEY=()
+        RETVAL=()
+        return
+    fi
+    if [ "${#arr_key[@]}" -eq 0 ]
+    then
+        for ((i=0; i<arr_len; i++))
+        do
+            arr_key+=("${i}")
+        done
+    fi
+    local sort_args="${2:--k2,2n}"
+    local arr_combined=()
+    for i in "${!arr_val[@]}"
+    do
+        arr_combined+=("${arr_key[${i}]}.${arr_val[${i}]}")
+    done
+    array-to-string "arr_combined[@]"
+    arr_combined="$(sort -t. ${sort_args} -k1,1n  <<< "${RETVAL}")"
+    string-to-array "${arr_combined}"
+    arr_combined=("${RETVAL[@]}")
+    arr_key=()
+    arr_val=()
+    for i in "${!arr_combined[@]}"
+    do
+        string-split "${arr_combined[${i}]}" "."
+        if [ -n "${RETVAL[2]}" ]
+        then
+            arr_key+=("${RETVAL[0]}")
+            arr_val+=("${RETVAL[2]}")
+        else
+            arr_key_empty+=("${RETVAL[0]}")
+            arr_val_empty+=("${RETVAL[2]}")
+        fi
+    done
+    RETKEY=("${arr_key[@]}" "${arr_key_empty[@]}")
+    RETVAL=("${arr_val[@]}" "${arr_val_empty[@]}")
+}
+
 function array-quicksort() {
     local ARG1=("${!1}")
     local ARG3=("${!3}")
@@ -688,6 +768,21 @@ function array-quicksort() {
         RETKEY=("${arr_key_f[@]}" "${arr_key_l[@]}" "${arr_key_e[@]}" "${arr_key_g[@]}" "${arr_key_b[@]}")
         RETVAL=("${arr_key_f[@]}" "${arr_key_l[@]}" "${arr_val_e[@]}" "${arr_val_g[@]}" "${arr_val_b[@]}")
     fi
+}
+
+array-type() {
+    local ARG1=("${!1}")
+    local array=("${ARG1[@]}")
+    local empty_is_int=${2:-false}
+    local i=
+    for i in "${!array[@]}"
+    do
+        var-type "${array[${i}]}" ${empty_is_int}
+        if [ "${RETVAL}" == "string" ]
+        then
+            return
+        fi
+    done
 }
 
 ########################################
@@ -802,6 +897,7 @@ function matrix-split-rows() {
 
 function matrix-to-array() {
     local matrix="${1}"
+    local i=
     array=()
     while IFS= read -r -a line
     do
@@ -815,6 +911,14 @@ function matrix-to-array() {
         fi
     done <<< "${matrix}"
     RETVAL=("${array[@]}")
+}
+
+########################################
+# Sort functions
+########################################
+
+function sort-args-increment() {
+    :
 }
 
 ########################################
@@ -1012,7 +1116,6 @@ function version-format-to-tokens() {
 
 function version-matrix-to-string() {
     local tokens="${1}"
-
     string-unquote "${2}"
     local major="${RETVAL}"
     string-unquote "${3}"
@@ -1023,14 +1126,12 @@ function version-matrix-to-string() {
     local prerel="${RETVAL}"
     string-unquote "${6}"
     local build="${RETVAL}"
-
     local version=
     local counter=0
     local direction=0
     local prefix=
     local suffix=
     local var=
-
     while IFS= read -r token
     do
         case "${token}" in
@@ -1099,14 +1200,12 @@ function version-matrix-to-string() {
 function version-string-to-matrix() {
     local tokens="${1}"
     local version="${2}"
-
     local counter=0
     local direction=0
     local prefix=
     local suffix=
     local var=
     local match=
-
     while IFS= read -r token
     do
         string-escape "${token}"
@@ -1191,11 +1290,11 @@ function version-string-to-matrix() {
 function version-sort() {
     local matrix="${1}"
     local component=${2}
-    local compare="${3}"
+    local sort_args="${3}"
     shift
     shift
     shift
-    if [ -z "${component}" ] || [ -z "${compare}" ]
+    if [ -z "${component}" ] || [ -z "${sort_args}" ]
     then
         RETVAL="${matrix}"
         return
@@ -1207,30 +1306,42 @@ function version-sort() {
     local splits_len=
     matrix-get-cols "${matrix}" ${component}
     matrix-to-array "${RETVAL}"
-    col=("${RETVAL[@]}")
-    array-quicksort "col[@]" "${compare}"
+    local col=("${RETVAL[@]}")
+echo {{{
+debug-benchmark
+echo "--- array-sort"
+    array-sort "col[@]" "${sort_args}"
+    #array-quicksort "col[@]" "${compare}"
     order=("${RETKEY[@]}")
+debug-benchmark
+echo "--- matrix-get-rows"
     matrix-get-rows "${matrix}" "order[@]"
     matrix="${RETVAL}"
+debug-benchmark
+echo "--- matrix-split-rows"
     matrix-split-rows "${matrix}" ${component}
     splits=(${RETVAL[@]})
     splits_len=${#splits[@]}
+debug-benchmark
+echo }}}
     local matrix_sorted=
     for (( i=1; i<${splits_len}; i++ ))
     do
-        nl=
         start=${splits[$((i-1))]}
         end=${splits[${i}]}
         : $((end--))
         matrix-get-rows "${matrix}" ${start} ${end}
-        version-sort "${RETVAL}" ${@}
-        [ "${RETVAL}" != "" ] && nl=$'\n'
-        matrix_sorted+="${RETVAL}"${nl}
+        if [ "${RETVAL}" != "" ]
+        then
+            version-sort "${RETVAL}" "${@}"
+            matrix_sorted+="${RETVAL}"$'\n'
+        fi
     done
     string-trim-trailing-newline "${matrix_sorted}"
 }
 
 function version-latest() {
+echo '--- version-string-to-matrix'
     local versions="${1}"
     local matrix=
     # Parse versions
@@ -1239,13 +1350,91 @@ function version-latest() {
         if [ -n "${line}" ]
         then
             version-string-to-matrix "${VERSION_TOKENS}" "${line}"
+#debug-benchmark
             matrix+="${RETVAL}"$'\n'
         fi
-    done <<< "$versions"
+    done <<< "${versions}"
+
     string-trim-trailing-newline "${matrix}"
-    version-sort "${RETVAL}" 0 "compare-int" 1 "compare-int" 2 "compare-int" 3 "compare-prerel"
+    matrix="${RETVAL}"
+debug-benchmark
+echo '--- version-prerel-sort-args'
+    matrix-get-cols "${matrix}" 3
+    version-prerel-sort-args "${RETVAL}" 2
+    sort_args="${RETVAL}"
+debug-benchmark
+echo '--- version-sort'
+    version-sort "${matrix}" 0 "-k2,2n" 1 "-k2,2n" 2 "-k2,2n" 3 "${sort_args}"
+debug-benchmark
     string-last "${RETVAL}"
     version-matrix-to-string "${VERSION_TOKENS}" ${RETVAL}
+}
+
+function version-prerels-to-matrix() {
+    local prerels="${1}"
+    local component=0
+    while IFS= read -r line
+    do
+        string-count-chars "${line}" "."
+        components=$((RETVAL > components ? RETVAL : components))
+    done <<< "${prerels}"
+    #: $((components++))
+    local index=
+    local matrix=""
+    while IFS= read -r line
+    do
+        string-unquote "${line}"
+        line="${RETVAL}"
+        string-split "${line}" "." true
+        for (( i = 0 ; i <= components; i++ ))
+        do
+            index=$((i*2))
+            if [ $i -ne 0 ]
+            then
+                matrix+=" "
+            fi
+            matrix+="\"${RETVAL[${index}]}\""
+        done
+        matrix+=$'\n'
+    done <<< "${prerels}"
+    string-trim-trailing-newline "${matrix}"
+}
+
+function version-prerel-sort-args() {
+    local string="${1}"
+    local offset="${2:-1}"
+    local matrix=
+    local count=
+    local i=
+    local sort_args=
+    local array=
+    local field=
+    version-prerels-to-matrix "${string}"
+    matrix="${RETVAL}"
+    matrix-count-cols "${matrix}"
+    count=${RETVAL}
+    for (( i=0 ; i<count ; i++ ))
+    do
+        field=$((i+offset))
+        if [ ${i} -ne 0 ]
+        then
+            sort_args+=" "
+        fi
+        matrix-get-cols "${matrix}" ${i}
+        matrix-to-array "${RETVAL}"
+        array=("${RETVAL[@]}")
+        array-type "array[@]" true
+        sort_args+="-k${field},${field}"
+        case "${RETVAL}" in
+            int)
+                sort_args+="n"
+                ;;
+            string)
+                sort_args+="d"
+                ;;
+        esac
+    done
+    RETVAL="${sort_args}"
 }
 
 ########################################
@@ -1762,8 +1951,31 @@ DEBUG_STRINGS="$(cat <<-'EOF'
 10.2.4
 10.1.5-beta+1234
 3.2.1-beta.2+3444
+10.2.1-alpha.10
+3.2.1-beta.1+3423
+3.4.1-alpha.10
+3.2.1-beta.1+3423
+3.3.1-alpha.10
 EOF
 )"
+DEBUG_PRERELS=$(cat <<-'EOF'
+alpha.2
+beta
+beta.2.2
+beta.2.100.a4
+gamma.3
+beta.beta
+gamma.1.1
+alpha
+
+alpha.1
+
+beta.2
+beta.20
+beta.100
+beta.1
+EOF
+)
 
 #
 # User config
@@ -1826,6 +2038,29 @@ case "$1" in
         version-patch
         ;;
     debug)
+
+        #version-prerel-sort-args "${DEBUG_PRERELS}" 2
+        #echo "${RETVAL}"
+        #exit
+
+        string-repeat "${DEBUG_STRINGS}" 50 $'\n'
+        #string-get-lines "${RETVAL}" 0 20
+        debug-benchmark
+        version-latest "${RETVAL}"
+        echo "${RETVAL}"
+        exit
+
+        #for i in {1..5}
+        #do
+        #    STRINGS+=$'\n'"${DEBUG_STRINGS}"
+        #    string-count-lines "${STRINGS}"
+        #    echo "Lines: ${RETVAL}"
+        #    version-latest "${STRINGS}"
+        #    echo "Output: ${RETVAL}"
+        #    debug-benchmark
+        #done
+        #exit
+
         version-latest "${DEBUG_STRINGS}"
         echo "${RETVAL}"
         ;;
