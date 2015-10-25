@@ -116,7 +116,15 @@ git semver [help]
 
 ## Configuration
 
-Configuration is stored in the file `${HOME}/.git-semver/config`. An example configuration file with the default settings can be found at [config.example].
+Git-semver will check for a configuration file in the following locations
+(and use the one that exists):
+
+- `${XDG_CONFIG_HOME}/.git-semver/config`
+- `${HOME}/.git-semver/config`
+
+Git-semver will default to `${HOME}/.git-semver/config` if no configuration file is found.
+
+An example configuration file with the default settings can be found at [config.example].
 
 ## Updates
 
