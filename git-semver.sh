@@ -410,35 +410,23 @@ version-do() {
 # Set home
 readonly DIR_HOME="${HOME}"
 
-# Check XDG Base Directories
+# Use XDG Base Directories if possible
 # (see http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html)
-XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
-XDG_DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
+DIR_CONF="${XDG_CONFIG_HOME:-$HOME}/.git-semver"
+DIR_DATA="${XDG_DATA_HOME:-$HOME}/.git-semver"
 
 # Set default config
 UPDATE_CHECK=1
 UPDATE_CHECK_INTERVAL_DAYS=1
 
 # Set (and load) user config
-if [ -f "${XDG_CONFIG_HOME}/.git-semver/config" ]
+if [ -f "${DIR_CONF}/config" ]
 then
-    FILE_CONF="${XDG_CONFIG_HOME}/.git-semver/config"
-    source "${FILE_CONF}"
-elif [ -f "${DIR_HOME}/.git-semver/config" ]
-then
-    FILE_CONF="${DIR_HOME}/.git-semver/config"
+    FILE_CONF="${DIR_CONF}/config"
     source "${FILE_CONF}"
 else
     # No existing config file was found; use default
     FILE_CONF="${DIR_HOME}/.git-semver/config"
-fi
-
-# Set Data Dir
-if [ -d "${XDG_DATA_HOME}/.git-semver" ]
-then
-    DIR_DATA="${XDG_DATA_HOME}/.git-semver"
-else
-    DIR_DATA="${DIR_HOME}/.git-semver"
 fi
 
 # Set vars
