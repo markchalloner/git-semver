@@ -5,6 +5,15 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
 
 ## [Unreleased][unreleased]
 
+### Added
+- Support for the [XDG Base Directory Specification][xdg_basedirs]. Details:
+  - Configuration will now prefer `$XDG_CONFIG_HOME/.git-semver/config` if it exists
+  - Update files will now prefer `$XDG_DATA_HOME/.git-semver/update` if it exists
+  - The previous values for both files are now used as a fallback. 
+    Existing files under `$HOME/.git-semver/` will continue to work as long as 
+    the `$XDG_*` paths do not exist.
+
+
 ## [2.0.2] - 2015-07-24
 ### Fixed
 - More fixes to updater
@@ -65,6 +74,7 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
 [CONTRIBUTING.md]: CONTRIBUTING.md
 [LICENCE.md]: LICENCE.md
 [README.md]: README.md
+[xdg_basedirs]: http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
 
 [unreleased]: https://github.com/markchalloner/git-semver/compare/2.0.2...HEAD
 [2.0.2]: https://github.com/markchalloner/git-semver/compare/2.0.1...2.0.2

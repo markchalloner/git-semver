@@ -7,6 +7,7 @@ We accept contributions via Pull Requests on [Github](https://github.com/markcha
 ## Contributers
 
 - [Volodymr Biloku](https://github.com/vladimino)
+- [Zearin](https://github.com/Zearin)
 
 ## Pull Requests
 
