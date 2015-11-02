@@ -5,7 +5,7 @@ pushd $(dirname $0) > /dev/null
 DIR_SELF=$(pwd -P)
 popd > /dev/null
 
-DIR_DATA="${HOME}/.git-semver"
+readonly DIR_HOME="${HOME}"
 
 # Running on MinGW
 uname -s | grep -q 'MINGW[^_]\+_NT'
@@ -21,10 +21,15 @@ do
     fi
 done
 
+# Use XDG Base Directories if available
+# (see http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html)
+DIR_CONF_DEST="${XDG_CONFIG_HOME:-$DIR_HOME}/.git-semver"
+DIR_DATA="${XDG_DATA_HOME:-$DIR_HOME}/.git-semver"
+
 FILE_SRC="${DIR_SELF}/git-semver.sh"
 FILE_DEST="${DIR_BIN}/git-semver"
 FILE_CONF_SRC="${DIR_SELF}/config.example"
-FILE_CONF_DEST="${DIR_DATA}/config"
+FILE_CONF_DEST="${DIR_CONF_DEST}/config"
 
 # If MinGW
 if [ ${OS_MINGW} -eq 0 ]
@@ -56,8 +61,11 @@ else
     ln -s "${FILE_SRC}" "${FILE_DEST}"
 fi
 
-# Copy configuration
+# Make data dir
 mkdir -p "${DIR_DATA}"
+
+# Copy configuration
+mkdir -p "${DIR_CONF_DEST}"
 if [ ! -f "${FILE_CONF_DEST}" ]
 then
     cp "${FILE_CONF_SRC}" "${FILE_CONF_DEST}"

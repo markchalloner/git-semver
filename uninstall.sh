@@ -11,5 +11,8 @@ done
 
 if [ "$1" == "-p" ] || [ "$1" == "--purge" ]
 then
-    rm -rf ${HOME}/.git-semver
+    DIR_CONF_DEST="${XDG_CONFIG_HOME:-$DIR_HOME}/.git-semver"
+    DIR_DATA="${XDG_DATA_HOME:-$DIR_HOME}/.git-semver"
+    
+    rm -rf "${DIR_CONF_DEST}" "${DIR_DATA}"
 fi
