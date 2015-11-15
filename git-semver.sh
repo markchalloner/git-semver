@@ -172,12 +172,12 @@ update() {
 
     if [ -n "$silent" ]
     then
-        local time_curr=$(date -d "${date_curr}" "+%s")
+        local time_curr=$(date -j -f "%Y-%m-%d" "${date_curr}" +%s)
         local time_prev=""
         local time_check=$((${time_curr} - ${UPDATE_CHECK_INTERVAL_DAYS} * 86400))
         if [ -f "${FILE_UPDATE}" ]
         then
-            time_prev=$(date -d "$(cat ${FILE_UPDATE} | tr -d $'\n')" "+%s")
+            time_prev=$(date -j -f "%Y-%m-%d" "$(cat ${FILE_UPDATE} | tr -d $'\n')" "+%s")
         else
             time_prev=${time_check}
         fi
