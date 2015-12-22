@@ -32,7 +32,7 @@ usage() {
 ########################################
 
 # Gets the index of the string to search
-# Takes a search string and an array of elements to join (as arguments)
+# Takes a search string and an array of elements to search
 #
 # Example
 #   $ arr=("red" "blue")
@@ -576,10 +576,10 @@ function array-exists() {
 function array-search() {
     local needle="$1"
     local ARG2=("${!2}")
-    local array=("${ARG2}")
+    local array=("${ARG2[@]}")
     for i in ${#array[@]}
     do
-        if [ "${array[${i}]}" = "${needle}" ]
+        if [ "${array[${i}]}" == "${needle}" ]
         then
             RETVAL="${i}"
             return 0
