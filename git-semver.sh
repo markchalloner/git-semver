@@ -865,34 +865,40 @@ function matrix-set() {
     done <<< "${matrix}"
 }
 
+# Splits a matrix into multiple rows (returning indexes of rows) when the data 
+# is different
+#
+# Example
+#   $ matrix-split-rows "$(echo -e "\"a\" \n\"a\" \n\"b\" \n\"b\" \n\"c\" \n\"c\" ")" 0
+#   $ echo "${RETVAL[@]}"
+#   (0 2 4)
+#
 function matrix-split-rows() {
     local matrix="${1}"
     local col="${2}"
-    local i=0
-    local var=
-    local prev=
-    local splits=()
-    while IFS=" " read -r -a line
-    do
-        if [ "${line[${col}]}" != "${prev}" ]
-        then
-            splits+=(${i})
-            prev="${line[${col}]}"
-        fi
-        : $((i++))
-    done <<< "${matrix}"
-    matrix-count-rows "${matrix}"
-    # If empty
-    if [ ${#splits[@]} -eq 0 ]
-    then
-        splits+=(0)
-    fi
-    # Add the end if not already added
-    if [ ${splits[@]: -1} -lt ${RETVAL} ]
-    then
-        splits+=(${RETVAL})
-    fi
-    RETVAL=(${splits[@]})
+    RETVAL=($(echo "${matrix}" | awk -v col="${col}" '
+        BEGIN { 
+            prev=""
+            curr=""
+            space=""
+            last=0
+            col=col+1
+        } 
+        { 
+            prev=curr; 
+            curr=$col; 
+            if (curr != prev) { 
+                last=NR-1
+                printf "%s%s", space, last
+                space=" "
+            } 
+        }
+        END {
+            if (NR != last) {
+                printf " %s", NR
+            }
+        }
+    '))
 }
 
 function matrix-to-array() {
@@ -1197,94 +1203,76 @@ function version-matrix-to-string() {
     RETVAL="${version}"
 }
 
-function version-string-to-matrix() {
-    local tokens="${1}"
-    local version="${2}"
-    local counter=0
-    local direction=0
-    local prefix=
-    local suffix=
-    local var=
-    local match=
-    while IFS= read -r token
-    do
-        string-escape "${token}"
-        token="${RETVAL}"
-        case "${token}" in
-            "{")
-                : $((counter++))
+function version-strings-to-matrix() {
+  local tokens="${1}"
+  local versions="${2}"
+  RETVAL=$(echo "${versions}" | awk -v tokens="${tokens}" '
+    BEGIN {
+        n=split(tokens, ts, "\n")
+    }
+    {
+        line=$0
+        counter=0
+        direction=0
+        prefix=""
+        suffix=""
+        var=""
+        regexp=""
+        for (i=0; i<n; i++) {
+            t=ts[i]
+            if (t == "{") {
+                counter++
                 direction=1
-                ;;
-            "}")
-                : $((counter--))
+            } else if (t == "}") {
+                counter--
                 direction=-1
-                ;;
-            *)
-                if [ ${counter} -eq 0 ]
-                then
-                    direction=0
-                fi
-        esac
-        case "${token}" in
-            "")
-                if [ ${counter} -eq 0 ]
-                then
-                    prefix=
-                    suffix=
-                fi
-                ;;
-            "major"|"minor"|"patch")
-                var="${token}"
-                match="+([0-9])"
-                ;;
-            "prerel"|"build")
-                var="${token}"
-                match="+([0-9A-Za-z.])"
-                ;;
-            "{")
-                ;;
-            "}")
-                if [ ${counter} -eq 0 ] && [ -n "${var}" ]
-                then
-                    string-split "${version}" "${prefix}${match}${suffix}"
-                    if [ ${#RETVAL[@]} -gt 1 ]
-                    then
-                        version="${RETVAL[2]}"
-                        # Remove prefix and suffix
-                        string-split "${RETVAL[1]}" "${match}"
-                        declare "${var}"="${RETVAL[1]}"
-                    fi
-                fi
-                ;;
-            *)
-
-                case ${counter} in
-                    # Non var
-                    0)
-                        string-replace "${version}" "${token}"
-                        version="${RETVAL}"
-                        ;;
-                    # Prefix or suffix
-                    1)
-                        if [ ${direction} -eq  1 ]
-                        then
-                            prefix="${token}"
-                        fi
-                        if [ ${direction} -eq -1 ]
-                        then
-                            suffix="${token}"
-                        fi
-                        ;;
-                    # Unknown var
-                    2)
-                        var=
-                        match=
-                        ;;
-                esac
-        esac
-        #printf "%-7s : %s : %2s : %s \n" "${token}" "${counter}" "${direction}" "${version}"
-    done <<< "${tokens}"
-    RETVAL="\"${major}\" \"${minor}\" \"${patch}\" \"${prerel}\" \"${build}\""
+            } else {
+                if (counter == 0) {
+                    direction = 0
+                }
+            }
+            if (t == "") {
+                if (counter == 0) {
+                    prefix=""
+                    suffix=""
+                }
+            } else if (t == "major"|| t == "minor" || t == "patch") {
+                var=t
+                regexp="[0-9]+"
+            } else if (t == "prerel" || t == "build") {
+                var=t
+                regexp="[0-9A-Za-z.]+"
+            } else if (t == "{") {
+            } else if (t == "}") {
+                if (counter == 0 && var != "") {
+                    match(line, prefix regexp suffix)
+                    if (RLENGTH > -1) {
+                        parsed[var]=substr(line, RSTART, RLENGTH)
+                        line=substr(line, RSTART+RLENGTH, length(line))
+                    }
+                }
+            } else {
+                # Non var
+                if (counter == 0) {
+                    sub(token, "", $line)
+                # Prefix or suffix
+                } else if (counter == 1) {
+                    if (direction == 1) {
+                        prefix=token
+                    } 
+                    else if (direction == -1) {
+                        suffix=token
+                    }
+                # Unknown var
+                } else if (counter == 2) {
+                    var=""
+                    regexp=""
+                }
+            }
+        }
+        printf "\"%s\" \"%s\" \"%s\" \"%s\" \"%s\"\n", parsed["major"], parsed["minor"], parsed["patch"], parsed["prerel"], parsed["build"]
+    }
+  ')
 }
 
 function version-sort() {
@@ -1308,7 +1296,7 @@ function version-sort() {
     matrix-to-array "${RETVAL}"
     local col=("${RETVAL[@]}")
 echo {{{
-debug-benchmark
+#debug-benchmark
 echo "--- array-sort"
     array-sort "col[@]" "${sort_args}"
     #array-quicksort "col[@]" "${compare}"
@@ -1317,11 +1305,14 @@ debug-benchmark
 echo "--- matrix-get-rows"
     matrix-get-rows "${matrix}" "order[@]"
     matrix="${RETVAL}"
-debug-benchmark
+#debug-benchmark
 echo "--- matrix-split-rows"
+#echo matrix-split-rows '${matrix}' ${component}
     matrix-split-rows "${matrix}" ${component}
     splits=(${RETVAL[@]})
     splits_len=${#splits[@]}
+#echo "${splits[@]}"
+#echo "${splits_len}"
 debug-benchmark
 echo }}}
     local matrix_sorted=
@@ -1341,23 +1332,30 @@ echo }}}
 }
 
 function version-latest() {
-echo '--- version-string-to-matrix'
+
     local versions="${1}"
     local matrix=
     # Parse versions
-    while IFS= read -r line
-    do
-        if [ -n "${line}" ]
-        then
-            version-string-to-matrix "${VERSION_TOKENS}" "${line}"
+#echo '--- version-string-to-matrix'
+#    while IFS= read -r line
+#    do
+#        if [ -n "${line}" ]
+#        then
+#            version-string-to-matrix "${VERSION_TOKENS}" "${line}"
 #debug-benchmark
-            matrix+="${RETVAL}"$'\n'
-        fi
-    done <<< "${versions}"
-
-    string-trim-trailing-newline "${matrix}"
+#            matrix+="${RETVAL}"$'\n'
+#        fi
+#    done <<< "${versions}"
+#    string-trim-trailing-newline "${matrix}"
+#    matrix="${RETVAL}"
+#echo "${matrix}"
+#debug-benchmark
+#echo '--- version-strings-to-matrix'
+    version-strings-to-matrix "${VERSION_TOKENS}" "${versions}"
     matrix="${RETVAL}"
-debug-benchmark
+#echo "${matrix}"
+#debug-benchmark
+#exit
 echo '--- version-prerel-sort-args'
     matrix-get-cols "${matrix}" 3
     version-prerel-sort-args "${RETVAL}" 2
@@ -1853,13 +1851,14 @@ version-matches() {
 
     # Build matches to parse out components
     matches=()
-    for i in "${!VERSION_COMPONENTS_NAMES[@]}"
+    for i in "${VERSION_COMPONENTS_NAMES[@]}"
     do
-        nums=$(  echo "major|minor|patch" | sed 's#'${i}'##g; s#^|\||$##g; s#||#|#g; s#|#\\|#g')
-        alnums=$(echo "prerel|build"      | sed 's#'${i}'##g; s#^|\||$##g;           s#|#\\|#g')
-        matches+=("^"$(echo "${format}"   | sed 's#{\([^{]*\){\('${VERSION_COMPONENTS_NAMES[${i}]}'\)}\([^}]*\)}#'${patterns[${i}]}'#g; s#{\([^{]*\){\('${nums}'\)}\([^}]*\)}#'${match_num}'#g; s#{\([^{]*\){\('${alnums}'\)}\([^}]*\)}#'${match_alnum}'#g; s#{[^{]*{[^}]\+}[^}]*}##g')"$")
+        :
+        #nums=$(  echo "major|minor|patch" | sed 's#'${i}'##g; s#^|\||$##g; s#||#|#g; s#|#\\|#g')
+        #alnums=$(echo "prerel|build"      | sed 's#'${i}'##g; s#^|\||$##g;           s#|#\\|#g')
+        #matches+=("^"$(echo "${format}"   | sed 's#{\([^{]*\){\('${VERSION_COMPONENTS_NAMES[${i}]}'\)}\([^}]*\)}#'${patterns[${i}]}'#g; s#{\([^{]*\){\('${nums}'\)}\([^}]*\)}#'${match_num}'#g; s#{\([^{]*\){\('${alnums}'\)}\([^}]*\)}#'${match_alnum}'#g; s#{[^{]*{[^}]\+}[^}]*}##g')"$")
     done
-    echo "${matches[@]}"
+    RETVAL=("${matches[@]}")
 }
 
 version-captures() {
@@ -1868,7 +1867,7 @@ version-captures() {
 
     format="$(version-split "${format}")"
     captures=()
-    for i in "${!VERSION_COMPONENTS_NAMES[@]}"
+    for i in "${VERSION_COMPONENTS_NAMES[@]}"
     do
         capture=1
         name=${VERSION_COMPONENTS_NAMES[$i]}
@@ -1882,7 +1881,7 @@ version-captures() {
         capture=$((capture+prerels+builds))
         captures+=(${capture})
     done
-    echo "${captures[@]}"
+    RETVAL=("${captures[@]}")
 }
 
 ########################################
@@ -2005,16 +2004,23 @@ VERSION_FORMAT=$(version-format-resolve "${VERSION_FORMAT}" "VERSION_COMPONENTS_
 version-format-to-tokens "${VERSION_FORMAT}"
 VERSION_TOKENS="${RETVAL}"
 
-#VERSION_MATCHES=($(version-matches "${VERSION_FORMAT}"))
+#echo "---version-matches"
+#version-matches "${VERSION_FORMAT}"
+#VERSION_MATCHES=("${RETVAL[@]}")
 #for i in "${VERSION_MATCHES[@]}"; do echo "${i}"; done
+
+#echo "---version-captures"
+#version-captures "${VERSION_FORMAT}"
+#VERSION_CAPTURES=("${RETVAL[@]}")
+#for i in "${VERSION_CAPTURES[@]}"; do echo "${i}"; done
 #exit
-#VERSION_CAPTURES=($(version-captures "${VERSION_FORMAT}"))
+
 #version=("3" "2" "1" "alpha" "2032")
 #VERSION_FORMAT=$(version-format-resolve "${VERSION_FORMAT}" "VERSION_COMPONENTS_NAMES[@]" "version[@]")
 #echo "${VERSION_FORMAT}"
 #exit
-
-
+#echo "${VERSION_TOKENS}"
+#exit
 
 ARGS=$@
 ARG_NOUPDATE=noupdate
@@ -2044,6 +2050,7 @@ case "$1" in
         #exit
 
         string-repeat "${DEBUG_STRINGS}" 50 $'\n'
+        echo "${RETVAL}" | wc -l
         #string-get-lines "${RETVAL}" 0 20
         debug-benchmark
         version-latest "${RETVAL}"
