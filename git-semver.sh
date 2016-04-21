@@ -326,23 +326,16 @@ plugin-debug() {
 # Version functions
 ########################################
 
-version-parse() {
-    echo $1 | sed 's#^\([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\)$#\1 \2 \3#g'
-}
-
 version-parse-major() {
-    local version=($(version-parse $1))
-    echo ${version[0]}
+    echo $1 | cut -d "." -f1
 }
 
 version-parse-minor() {
-    local version=($(version-parse $1))
-    echo ${version[1]}
+    echo $1 | cut -d "." -f2
 }
 
 version-parse-patch() {
-    local version=($(version-parse $1))
-    echo ${version[2]}
+    echo $1 | cut -d "." -f3
 }
 
 version-get() {
