@@ -158,6 +158,7 @@ update-silent() {
 
 update() {
     silent=$1
+
     local status=1
     local date_curr=$(date "+%Y-%m-%d")
 
@@ -172,12 +173,31 @@ update() {
 
     if [ -n "$silent" ]
     then
-        local time_curr=$(date -j -f "%Y-%m-%d" "${date_curr}" +%s)
+        local time_curr=""
         local time_prev=""
+
+        # Try GNU date
+        local date_cmd="date -d"
+        time_curr=$(${date_cmd} "${date_curr}" "+%s" 2> /dev/null)
+        # Otherwise fall back to OS specific args (and cache command)
+        if [ $? -eq 1 ]
+        then
+            case "$OSTYPE" in
+                darwin*|bsd*)
+                    date_cmd=$(date -j -f "%Y-%m-%d")
+                    time_curr=$(${date_cmd} "${date_curr}" "+%s")
+                ;;
+                *)
+                    echo 'Error: unable to convert date using `date -d "YYYY-MM-DD" "+%s"` on '${OSTYPE}'.'
+                    return 1
+                ;;
+            esac
+        fi
+
         local time_check=$((${time_curr} - ${UPDATE_CHECK_INTERVAL_DAYS} * 86400))
         if [ -f "${FILE_UPDATE}" ]
         then
-            time_prev=$(date -j -f "%Y-%m-%d" "$(cat ${FILE_UPDATE} | tr -d $'\n')" "+%s")
+            time_prev=$(${date_cmd} "$(cat ${FILE_UPDATE} | tr -d $'\n')" "+%s")
         else
             time_prev=${time_check}
         fi
