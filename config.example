@@ -6,3 +6,6 @@ UPDATE_CHECK=1
 
 # Check for updated every X days
 UPDATE_CHECK_INTERVAL_DAYS=1
+
+# Use a fixed version prefix (e.g. v1.0.0)
+#VERSION_PREFIX=v

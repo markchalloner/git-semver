@@ -359,12 +359,12 @@ version-parse-patch() {
 }
 
 version-get() {
-    local version=$(git tag | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$" | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)
-    if [ "" == "$version" ]
+    local version=$(git tag | grep "^${VERSION_PREFIX}[0-9]\+\.[0-9]\+\.[0-9]\+$" | sed 's/^${VERSION_PREFIX}//' | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)
+    if [ "" == "${version}" ]
     then
         return 1
     else
-        echo $version
+        echo ${version}
     fi
 }
 
@@ -373,9 +373,9 @@ version-major() {
     local major=$(version-parse-major ${version})
     if [ "" == "$version" ]
     then
-        local new=1.0.0
+        local new=${VERSION_PREFIX}1.0.0
     else
-        local new=$((${major} + 1)).0.0
+        local new=${VERSION_PREFIX}$((${major} + 1)).0.0
     fi
     version-do "$new" "$version"
 }
@@ -386,9 +386,9 @@ version-minor() {
     local minor=$(version-parse-minor ${version})
     if [ "" == "$version" ]
     then
-        local new=0.1.0
+        local new=${VERSION_PREFIX}0.1.0
     else
-        local new=${major}.$((${minor} + 1)).0
+        local new=${VERSION_PREFIX}${major}.$((${minor} + 1)).0
     fi
     version-do "$new" "$version"
 }
@@ -400,9 +400,9 @@ version-patch() {
     local patch=$(version-parse-patch ${version})
     if [ "" == "$version" ]
     then
-        local new=0.1.0
+        local new=${VERSION_PREFIX}0.1.0
     else
-        local new=${major}.${minor}.$(($patch + 1))
+        local new=${VERSION_PREFIX}${major}.${minor}.$(($patch + 1))
     fi
     version-do "$new" "$version"
 }
