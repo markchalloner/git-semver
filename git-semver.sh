@@ -188,7 +188,7 @@ update() {
                     time_curr=$(${date_cmd} "${date_curr}" "+%s")
                 ;;
                 *)
-                    echo 'Error: unable to convert date using `date -d "YYYY-MM-DD" "+%s"` on '${OSTYPE}'.'
+                    echo 'Error: unable to convert date using `date -d "'${date_curr}'" "+%s"` on '${OSTYPE}'.'
                     return 1
                 ;;
             esac
@@ -425,8 +425,8 @@ readonly DIR_HOME="${HOME}"
 
 # Use XDG Base Directories if possible
 # (see http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html)
-DIR_CONF="${XDG_CONFIG_HOME:-$HOME}/.git-semver"
-DIR_DATA="${XDG_DATA_HOME:-$HOME}/.git-semver"
+DIR_CONF="${XDG_CONFIG_HOME:-${HOME}}/.git-semver"
+DIR_DATA="${XDG_DATA_HOME:-${HOME}}/.git-semver"
 
 # Set default config
 UPDATE_CHECK=1
