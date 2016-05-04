@@ -184,7 +184,7 @@ update() {
         then
             case "$OSTYPE" in
                 darwin*|bsd*)
-                    date_cmd=$(date -j -f "%Y-%m-%d")
+                    date_cmd="date -j -f %Y-%m-%d"
                     time_curr=$(${date_cmd} "${date_curr}" "+%s")
                 ;;
                 *)
