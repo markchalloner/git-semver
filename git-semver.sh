@@ -283,7 +283,7 @@ plugin-list() {
         plugin_dir="${dirs[${i}]}/.git-semver/plugins"
         if [ -d "${plugin_dir}" ]
         then
-            find "${plugin_dir}" -maxdepth 1 -type f \( -perm -u=x -o -perm -g=x -o -perm -o=x \) -exec bash -c "[ -x {} ]" \; -printf "${plugin_type},%p \n"
+            find "${plugin_dir}" -maxdepth 1 -type f -exec test -x "{}" \; -exec echo "${plugin_type},{}" \;
         fi
     done
 }
