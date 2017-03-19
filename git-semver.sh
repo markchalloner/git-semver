@@ -1,5 +1,4 @@
 #!/bin/bash
-
 ########################################
 # Usage
 ########################################
@@ -359,7 +358,7 @@ version-parse-patch() {
 }
 
 version-get() {
-    local version=$(git tag | grep "^${VERSION_PREFIX}[0-9]\+\.[0-9]\+\.[0-9]\+$" | sed 's/^${VERSION_PREFIX}//' | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)
+    local version=$(git tag | grep "^${VERSION_PREFIX}[0-9]\+\.[0-9]\+\.[0-9]\+$" | sed "s/^${VERSION_PREFIX}//" | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)
     if [ "" == "${version}" ]
     then
         return 1
