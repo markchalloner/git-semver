@@ -70,3 +70,6 @@ if [ ! -f "${FILE_CONF_DEST}" ]
 then
     cp "${FILE_CONF_SRC}" "${FILE_CONF_DEST}"
 fi
+
+# Chown as user
+chown -R "$(logname)" "${DIR_CONF_DEST}"

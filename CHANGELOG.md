@@ -12,7 +12,8 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
   - The previous values for both files are now used as a fallback. 
     Existing files under `$HOME/.git-semver/` will continue to work as long as 
     the `$XDG_*` paths do not exist.
-
+### Fixed
+- Config ownership on installation.
 
 ## [2.0.2] - 2015-07-24
 ### Fixed
