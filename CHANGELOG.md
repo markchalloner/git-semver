@@ -14,6 +14,7 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
     the `$XDG_*` paths do not exist.
 ### Fixed
 - Config ownership on installation.
+- Validation of previous update date.
 
 ## [2.0.2] - 2015-07-24
 ### Fixed

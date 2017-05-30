@@ -162,7 +162,6 @@ update() {
     local date_curr=$(date "+%Y-%m-%d")
 
     mkdir -p ${DIR_DATA}
-    echo ${date_curr} > "${FILE_UPDATE}"
 
     if update-force-enabled
     then
@@ -170,8 +169,10 @@ update() {
         UPDATE_CHECK_INTERVAL_DAYS=0
     fi
 
+    # If silent mode only check every ${UPDATE_CHECK_INTERVAL_DAYS} days
     if [ -n "$silent" ]
     then
+        local date_prev=""
         local time_curr=""
         local time_prev=""
 
@@ -194,9 +195,15 @@ update() {
         fi
 
         local time_check=$((${time_curr} - ${UPDATE_CHECK_INTERVAL_DAYS} * 86400))
+
         if [ -f "${FILE_UPDATE}" ]
         then
-            time_prev=$(${date_cmd} "$(cat ${FILE_UPDATE} | tr -d $'\n')" "+%s")
+            date_prev="$(cat ${FILE_UPDATE} | tr -d $'\n')"
+        fi
+
+        if [ -n "${date_prev}" ]
+        then
+            time_prev=$(${date_cmd} "${date_prev}" "+%s")
         else
             time_prev=${time_check}
         fi
@@ -206,6 +213,8 @@ update() {
             return 1
         fi
     fi
+
+    echo "${date_curr}" > "${FILE_UPDATE}"
 
     if ! $(which git > /dev/null)
     then
