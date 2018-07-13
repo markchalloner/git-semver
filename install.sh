@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Get script directory
-pushd $(dirname $0) > /dev/null
+pushd "$(dirname "$0")" > /dev/null
 DIR_SELF=$(pwd -P)
 popd > /dev/null
 
@@ -11,10 +11,10 @@ readonly DIR_HOME="${HOME}"
 uname -s | grep -q 'MINGW[^_]\+_NT'
 OS_MINGW=$?
 
-dirs=("${HOME}/.local/bin" "${HOME}/bin" "/usr/local/bin" "/usr/bin" "/bin")
+dirs=("${DIR_HOME}/.local/bin" "${DIR_HOME}/bin" "/usr/local/bin" "/usr/bin" "/bin")
 for i in "${dirs[@]}"
 do
-    if [ -d "${i}" ] && $(echo $PATH | grep -q "${i}")
+    if [ -d "${i}" ] && echo "$PATH" | grep -q "${i}"
     then
         DIR_BIN="${i}"
         break;

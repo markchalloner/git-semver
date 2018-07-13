@@ -5,7 +5,15 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
 
 ## [Unreleased][unreleased]
 
-## [3.0.0] - 2018-07-12
+## [3.0.1] - 2018-07-13
+### Fixed
+- Incorrect statements in README.
+- Shellcheck errors.
+
+## Removed
+- Unused helper functions and variables.
+
+## [3.0.0] - 2018-07-13
 ### Added
 - Support for the [XDG Base Directory Specification][xdg_basedirs]. Details:
   - Configuration will now prefer `$XDG_CONFIG_HOME/.git-semver/config` if it exists
@@ -85,7 +93,8 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
 [README.md]: README.md
 [xdg_basedirs]: http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
 
-[unreleased]: https://github.com/markchalloner/git-semver/compare/3.0.0...HEAD
+[unreleased]: https://github.com/markchalloner/git-semver/compare/3.0.1...HEAD
+[3.0.1]: https://github.com/markchalloner/git-semver/compare/3.0.0...3.0.1
 [3.0.0]: https://github.com/markchalloner/git-semver/compare/2.0.2...3.0.0
 [2.0.2]: https://github.com/markchalloner/git-semver/compare/2.0.1...2.0.2
 [2.0.1]: https://github.com/markchalloner/git-semver/compare/2.0.0...2.0.1

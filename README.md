@@ -11,7 +11,8 @@
 
 ## Introduction
 
-A git plugin to make adherance to [Semantic Versioning 2.0.0] easier, with its own plugin architecture for optional version management of:
+A git plugin to make adherance to [Semantic Versioning 2.0.0] easier, with its own plugin architecture for optional
+version management of:
 
 - [Keep a Changelog][Keep a CHANGELOG] [CHANGELOG.md] file
 - [NPM] [package.json] file
@@ -21,7 +22,8 @@ See [PLUGINS.md] for a description of plugins.
 
 ### Semantic versioning
 
-[Semantic Versioning 2.0.0] is a scheme for versioning, which includes 3 parts e.g. ```3.2.1``` the components of which are:
+[Semantic Versioning 2.0.0] is a scheme for versioning, which includes 3 parts e.g. ```3.2.1``` the components of which
+are:
 
   - Major: Used only for backward compatible breaking changes, i.e. when we have an all new theme etc.
   - Minor: Used for normal development, i.e. creating a new template
@@ -31,18 +33,20 @@ See [PLUGINS.md] for a description of plugins.
 
 Via git clone.
 
+``` bash
+(git clone https://github.com/markchalloner/git-semver.git && sudo git-semver/install.sh)
+```
+
 The installer installs git-semver into the first of the following directories that exist and are in the path:
 
+- $HOME/.local/bin
+- $HOME/bin
+- /usr/local/bin
 - /usr/local/bin
 - /usr/bin
 - /bin
 
 In Linux, OSX and Windows Cygwin the installer will create a symlink. In Windows MinGW creates a stub instead.
-
-``` bash
-(git clone https://github.com/markchalloner/git-semver.git && sudo git-semver/install.sh)
-
-```
 
 The installer will not overwrite any existing [configuration](#configuration) or [plugins][PLUGINS.md].
 
@@ -94,14 +98,6 @@ git semver major
 
 If no version has been created, the initial version will be: **1.0.0**
 
-### Update
-
-See [Updates]
-
-``` bash
-git semver update
-```
-
 ### Help
 
 Run git semver with no arguments to see usage
@@ -112,13 +108,12 @@ git semver [help]
 
 ## Configuration
 
-Git-semver will check for a configuration file in the following locations
-(and use the one that exists):
+Git-semver will check for a configuration file in the following locations (and use the one that exists):
 
-- `${XDG_CONFIG_HOME}/.git-semver/config`
-- `${HOME}/.git-semver/config`
+- `$XDG_CONFIG_HOME/.git-semver/config`
+- `$HOME/.git-semver/config`
 
-Git-semver will default to `${HOME}/.git-semver/config` if no configuration file is found.
+Git-semver will default to `$HOME/.git-semver/config` if no configuration file is found.
 
 An example configuration file with the default settings can be found at [config.example].
 
@@ -146,6 +141,7 @@ The purge switch will additionally remove the configuration directory.
 
 git-semver is installed by placing a symlink/stub in one of the bin directories in the path.
 
+- ${HOME}/.local/bin
 - ${HOME}/bin
 - /usr/local/bin
 - /usr/bin

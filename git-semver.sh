@@ -26,101 +26,8 @@ usage() {
 # Helper functions
 ########################################
 
-# Joins elements in an array with a separator
-# Takes a separator and array of elements to join
-#
-# Adapted from code by gniourf_gniourf (http://stackoverflow.com/a/23673883/1819350)
-#
-# Example
-#   $ arr=("red car" "blue bike")
-#   $ join " and " "${arr[@]}"
-#   red car and blue bike
-#   $ join $'\n' "${arr[@]}"
-#   red car
-#   blue bike
-#
-function join() {
-    local separator=$1
-    local elements=$2
-    shift 2 || shift $(($#))
-    printf "%s" "$elements${@/#/$separator}"
-}
-
-# Gets input from the console
-# Takes a string message and optionally a string default (not shown if secure is set) and a boolean secure flag for passwords
-#
-# Example
-#   $ get_input "Enter a password" "123456" true
-#   Enter a password (defaults to 1234) (not visible):
-#   $ password=${RETVAL}
-#
-function get_input() {
-    local message=$1
-    local default=$2
-    local secure=$3
-    local args="-r"
-    local output=
-    local msg_notvisible=
-    local msg_default=
-    if [ -n "${default}" ]
-    then
-        if [ "${secure}" = true ]
-        then
-            default_secure="unchanged"
-        else
-            default_secure=\"${default}\"
-        fi
-        msg_default=" (defaults to ${default_secure})"
-    fi
-    if [ "${secure}" = true ]
-    then
-        args="${args} -s"
-        msg_notvisible=" (not visible)"
-    fi
-    while :
-    do
-        echo -n "${message}${msg_default}${msg_notvisible}: "
-        read ${args} input
-        if [ "${secure}" = true ]
-        then
-            echo
-        fi
-        if [ -n "${input}" ]
-        then
-            output=${input}
-            break
-        elif [ -n "${default}" ]
-        then
-            output=${default}
-            break
-        fi
-    done
-    RETVAL=${output}
-}
-
-# Resolves a path to a real path
-# Takes a string path
-#
-# Example
-#   $ echo $(resolve-path "/var/./www/../log/messages.log")
-#   /var/log/messages.log
-#
-resolve-path() {
-    local path="$1"
-    if pushd "$path" > /dev/null 2>&1
-    then
-        path=$(pwd -P)
-        popd > /dev/null
-    elif [ -L "$path" ]
-    then
-        path="$(ls -l "$path" | sed 's#.* /#/#g')"
-        path="$(resolve-path $(dirname "$path"))/$(basename "$path")"
-    fi
-    echo "$path"
-}
-
 function basename-git() {
-    echo $(basename "$1" | tr '-' ' ' | sed 's/.sh$//g')
+    basename "$1" | tr '-' ' ' | sed 's/.sh$//g'
 }
 
 ########################################
@@ -148,7 +55,7 @@ plugin-list() {
     local plugin_dir=
     local plugin_type=
     local total=${#dirs[*]}
-    for (( i=0; i <= $(( $total-1 )); i++ ))
+    for (( i=0; i <= $((total-1)); i++ ))
     do
         plugin_type=${types[${i}]}
         plugin_dir="${dirs[${i}]}/.git-semver/plugins"
@@ -160,6 +67,7 @@ plugin-list() {
 }
 
 plugin-run() {
+    # shellcheck disable=SC2155
     local plugins="$(plugin-list)"
     local version_new="$1"
     local version_current="$2"
@@ -167,15 +75,13 @@ plugin-run() {
     local type=
     local typel=
     local path=
-    local file=
     local name=
     for i in ${plugins}
     do
         type=${i%%,*}
-        typel=$(echo ${type} | tr '[:upper:]' '[:lower:]')
+        typel=$(echo "${type}" | tr '[:upper:]' '[:lower:]')
         path=${i##*,}
-        name=$(basename ${path})
-        #name=${file%.*}
+        name=$(basename "${path}")
         ${path} "${version_new}" "${version_current}" "${GIT_HASH}" "${GIT_BRANCH}" "${DIR_ROOT}" 2>&1 |
             plugin-output "${type}" "${name}"
         RETVAL=${PIPESTATUS[0]}
@@ -201,15 +107,19 @@ plugin-run() {
 }
 
 plugin-debug() {
+    # shellcheck disable=SC2155
     local version=$(version-get)
-    local major=$(version-parse-major ${version})
-    local minor=$(version-parse-minor ${version})
-    local patch=$(version-parse-patch ${version})
+    # shellcheck disable=SC2155
+    local major=$(version-parse-major "${version}")
+    # shellcheck disable=SC2155
+    local minor=$(version-parse-minor "${version}")
+    # shellcheck disable=SC2155
+    local patch=$(version-parse-patch "${version}")
     if [ "" == "$version" ]
     then
         local new=0.1.0
     else
-        local new=${major}.${minor}.$(($patch + 1))
+        local new=${major}.${minor}.$((patch+1))
     fi
     plugin-run "$new" "$version"
 }
@@ -219,62 +129,72 @@ plugin-debug() {
 ########################################
 
 version-parse-major() {
-    echo $1 | cut -d "." -f1
+    echo "$1" | cut -d "." -f1
 }
 
 version-parse-minor() {
-    echo $1 | cut -d "." -f2
+    echo "$1" | cut -d "." -f2
 }
 
 version-parse-patch() {
-    echo $1 | cut -d "." -f3
+    echo "$1" | cut -d "." -f3
 }
 
 version-get() {
+    # shellcheck disable=SC2155
     local version=$(git tag | grep "^${VERSION_PREFIX}[0-9]\+\.[0-9]\+\.[0-9]\+$" | sed "s/^${VERSION_PREFIX}//" | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)
     if [ "" == "${version}" ]
     then
         return 1
     else
-        echo ${version}
+        echo "${version}"
     fi
 }
 
 version-major() {
+    # shellcheck disable=SC2155
     local version=$(version-get)
-    local major=$(version-parse-major ${version})
+    # shellcheck disable=SC2155
+    local major=$(version-parse-major "${version}")
     if [ "" == "$version" ]
     then
         local new=${VERSION_PREFIX}1.0.0
     else
-        local new=${VERSION_PREFIX}$((${major} + 1)).0.0
+        local new=${VERSION_PREFIX}$((major+1)).0.0
     fi
     version-do "$new" "$version"
 }
 
 version-minor() {
+    # shellcheck disable=SC2155
     local version=$(version-get)
-    local major=$(version-parse-major ${version})
-    local minor=$(version-parse-minor ${version})
+    # shellcheck disable=SC2155
+    local major=$(version-parse-major "${version}")
+    # shellcheck disable=SC2155
+    local minor=$(version-parse-minor "${version}")
     if [ "" == "$version" ]
     then
         local new=${VERSION_PREFIX}0.1.0
     else
-        local new=${VERSION_PREFIX}${major}.$((${minor} + 1)).0
+        local new=${VERSION_PREFIX}${major}.$((minor+1)).0
     fi
     version-do "$new" "$version"
 }
 
 version-patch() {
+    # shellcheck disable=SC2155
     local version=$(version-get)
-    local major=$(version-parse-major ${version})
-    local minor=$(version-parse-minor ${version})
-    local patch=$(version-parse-patch ${version})
+    # shellcheck disable=SC2155
+    local major=$(version-parse-major "${version}")
+    # shellcheck disable=SC2155
+    local minor=$(version-parse-minor "${version}")
+    # shellcheck disable=SC2155
+    local patch=$(version-parse-patch "${version}")
     if [ "" == "$version" ]
     then
         local new=${VERSION_PREFIX}0.1.0
     else
-        local new=${VERSION_PREFIX}${major}.${minor}.$(($patch + 1))
+        local new=${VERSION_PREFIX}${major}.${minor}.$((patch+1))
     fi
     version-do "$new" "$version"
 }
@@ -304,12 +224,12 @@ readonly DIR_HOME="${HOME}"
 # Use XDG Base Directories if possible
 # (see http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html)
 DIR_CONF="${XDG_CONFIG_HOME:-${HOME}}/.git-semver"
-DIR_DATA="${XDG_DATA_HOME:-${HOME}}/.git-semver"
 
 # Set (and load) user config
 if [ -f "${DIR_CONF}/config" ]
 then
     FILE_CONF="${DIR_CONF}/config"
+    # shellcheck source=config.example
     source "${FILE_CONF}"
 else
     # No existing config file was found; use default
@@ -322,8 +242,8 @@ DIR_ROOT="$(git rev-parse --show-toplevel 2> /dev/null)"
 GIT_HASH="$(git rev-parse HEAD 2> /dev/null)"
 GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2> /dev/null)"
 
-ARGS=$@
-for ARG_LAST; do true; done
+# Set $1 to last argument.
+for _; do true; done
 
 case "$1" in
     get)
