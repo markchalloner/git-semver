@@ -1,5 +1,5 @@
-# Check for a valid change log and change log entry
-CHANGELOG_CHECK=1
-
 # Use a fixed version prefix (e.g. v1.0.0)
 #VERSION_PREFIX=v
+
+# Sign tags
+#GIT_SIGN=1

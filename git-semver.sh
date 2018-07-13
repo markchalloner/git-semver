@@ -282,9 +282,15 @@ version-patch() {
 version-do() {
     local new="$1"
     local version="$2"
+    local sign="${GIT_SIGN:-0}"
+    local cmd="git tag"
+    if [ "$sign" == "1" ]
+    then
+        cmd="$cmd -as -m $new"
+    fi
     if plugin-run "$new" "$version"
     then
-        git tag "$new" && echo "$new"
+        $cmd "$new" && echo "$new"
     fi
 }
 
@@ -299,10 +305,6 @@ readonly DIR_HOME="${HOME}"
 # (see http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html)
 DIR_CONF="${XDG_CONFIG_HOME:-${HOME}}/.git-semver"
 DIR_DATA="${XDG_DATA_HOME:-${HOME}}/.git-semver"
-
-# Set default config
-UPDATE_CHECK=1
-UPDATE_CHECK_INTERVAL_DAYS=1
 
 # Set (and load) user config
 if [ -f "${DIR_CONF}/config" ]
