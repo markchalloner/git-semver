@@ -40,11 +40,7 @@ The installer installs git-semver into the first of the following directories th
 In Linux, OSX and Windows Cygwin the installer will create a symlink. In Windows MinGW creates a stub instead.
 
 ``` bash
-(git clone git@github.com:markchalloner/git-semver.git && \
-cd git-semver && git checkout $(
-    git tag | grep '^[0-9]\+\.[0-9]\+\.[0-9]\+$' | \
-    sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -n 1
-) && sudo ./install.sh)
+(git clone https://github.com/markchalloner/git-semver.git && sudo git-semver/install.sh)
 
 ```
 
@@ -128,25 +124,11 @@ An example configuration file with the default settings can be found at [config.
 
 ## Updates
 
-The tool has a built in updater that checks for a new version of git semver
+Updates can be done using git. Change to the cloned directory and run a git pull:
 
-``` bash
-git semver update
 ```
-
-By default it will automatically check for a new version daily. The automatic check can be disabled by changing the [configuration](#configuration) setting:
-
-``` bash
-UPDATE_CHECK=0
+(cd $(dirname $(readlink $(which git-semver))) && git status)
 ```
-
-The updaate check interval in days can be set by changing the [configuration](#configuration) setting:
-
-``` bash
-UPDATE_CHECK_INTERVAL_DAYS=1
-```
-
-The date of the last check is saved in `${HOME}/.git-semver/update`
 
 ## Uninstallation
 

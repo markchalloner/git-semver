@@ -1,5 +1,5 @@
 #!/bin/bash
-dirs=("${HOME}/bin" "/usr/local/bin" "/usr/bin" "/bin")
+dirs=("${HOME}/.local/bin" "${HOME}/bin" "/usr/local/bin" "/usr/bin" "/bin")
 for i in "${dirs[@]}"
 do
     GIT_SEMVER=${i}/git-semver

@@ -16,7 +16,6 @@ usage() {
 		 major      Generates a tag for the next major version and echos it to the screen
 		 minor      Generates a tag for the next minor version and echos it to the screen
 		 patch|next Generates a tag for the next patch version and echos it to the screen
-		 update     Check for updates and install if there are any available
 		 help       This message
 
 	EOF
@@ -125,133 +124,6 @@ function basename-git() {
 }
 
 ########################################
-# Update functions
-########################################
-
-update-force-enabled() {
-    [ -n "${UPDATE_CHECK_FORCE}" ] && [ ${UPDATE_CHECK_FORCE} -eq 1 ]
-    return $?
-}
-
-update-check() {
-    local dir="$1"
-    if [ -d "${dir}/.git" ]
-    then
-        (cd "${dir}" && git fetch && git fetch --tags) > /dev/null 2>&1
-        local version=$(cd "${dir}" && git tag | grep "^[0-9]\+\.[0-9]\+\.[0-9]\+$" | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)
-        if update-force-enabled || [ $(cd "${dir}" && git rev-list --left-right HEAD...${version} | grep "^>" | wc -l | sed 's/ //g') -gt 0 ]
-        then
-            echo ${version}
-            return 0
-        fi
-    fi
-    return 1
-}
-
-update-silent() {
-    if [ "$1" != "${ARG_NOUPDATE}" ] && [ ${UPDATE_CHECK} -eq 1 ]
-    then
-        update true
-    fi
-}
-
-update() {
-    silent=$1
-
-    local status=1
-    local date_curr=$(date "+%Y-%m-%d")
-
-    mkdir -p ${DIR_DATA}
-    echo ${date_curr} > "${FILE_UPDATE}"
-
-    if update-force-enabled
-    then
-        echo "Warning: Forcing update check (UPDATE_CHECK_FORCE=1)"
-        UPDATE_CHECK_INTERVAL_DAYS=0
-    fi
-
-    if [ -n "$silent" ]
-    then
-        local time_curr=""
-        local time_prev=""
-
-        # Try GNU date
-        local date_cmd="date -d"
-        time_curr=$(${date_cmd} "${date_curr}" "+%s" 2> /dev/null)
-        # Otherwise fall back to OS specific args (and cache command)
-        if [ $? -eq 1 ]
-        then
-            case "$OSTYPE" in
-                darwin*|bsd*)
-                    date_cmd="date -j -f %Y-%m-%d"
-                    time_curr=$(${date_cmd} "${date_curr}" "+%s")
-                ;;
-                *)
-                    echo 'Error: unable to convert date using `date -d "'${date_curr}'" "+%s"` on '${OSTYPE}'.'
-                    return 1
-                ;;
-            esac
-        fi
-
-        local time_check=$((${time_curr} - ${UPDATE_CHECK_INTERVAL_DAYS} * 86400))
-        if [ -f "${FILE_UPDATE}" ]
-        then
-            time_prev=$(${date_cmd} "$(cat ${FILE_UPDATE} | tr -d $'\n')" "+%s")
-        else
-            time_prev=${time_check}
-        fi
-
-        if [ ${time_check} -lt ${time_prev}  ]
-        then
-            return 1
-        fi
-    fi
-
-    if ! $(which git > /dev/null)
-    then
-        if [ -z "$silent" ]
-        then
-            echo "Error: Unable to update - git is not installed"
-        fi
-        return 1
-    fi
-
-    local dir="$(dirname $(resolve-path "$0"))"
-    if [ ! -d "${dir}/.git" ]
-    then
-        if [ -z "$silent" ]
-        then
-            echo "Error: Unable to update - cannot find git repository"
-        fi
-        return 1
-    fi
-
-    version=$(update-check "${dir}")
-    if [ $? -gt 0 ]
-    then
-        if [ -z "$silent" ]
-        then
-            echo "No updates found"
-        fi
-        return 0
-    fi
-
-    get_input "New version ${version} found. Update (y/n)?" "y"
-    do_update="$(echo ${RETVAL} | tr '[:upper:]' '[:lower:]')"
-    if [ "${do_update}" == "y" ] || [ "${do_update}" == "yes" ]
-    then
-        if [ -n "$silent" ]
-        then
-            echo -e "Updating. Rerun your command with this new version:\n\n$(basename-git $0) ${ARGS}"
-        fi
-        # Disown this subshell to allow this script to close and avoid permission denied errors due to file locking
-        ( sleep 1 && cd ${dir} && git checkout ${version} > /dev/null 2>&1 && ./install.sh ) &
-        disown
-        exit
-    fi
-}
-
-########################################
 # Plugin functions
 ########################################
 
@@ -282,7 +154,7 @@ plugin-list() {
         plugin_dir="${dirs[${i}]}/.git-semver/plugins"
         if [ -d "${plugin_dir}" ]
         then
-            find "${plugin_dir}" -maxdepth 1 -type f -exec test -x "{}" \; -exec echo "${plugin_type},{}" \;
+            find "${plugin_dir}" -maxdepth 1 -type f -exec echo "${plugin_type},{}" \;
         fi
     done
 }
@@ -304,7 +176,8 @@ plugin-run() {
         path=${i##*,}
         name=$(basename ${path})
         #name=${file%.*}
-        ${path} "${version_new}" "${version_current}" "${GIT_HASH}" "${GIT_BRANCH}" "${DIR_ROOT}" | plugin-output "${type}" "${name}"
+        ${path} "${version_new}" "${version_current}" "${GIT_HASH}" "${GIT_BRANCH}" "${DIR_ROOT}" 2>&1 |
+            plugin-output "${type}" "${name}"
         RETVAL=${PIPESTATUS[0]}
         case ${RETVAL} in
             0)
@@ -443,37 +316,28 @@ fi
 
 # Set vars
 DIR_ROOT="$(git rev-parse --show-toplevel 2> /dev/null)"
-FILE_UPDATE="${DIR_DATA}/update"
 
 GIT_HASH="$(git rev-parse HEAD 2> /dev/null)"
 GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2> /dev/null)"
 
 ARGS=$@
-ARG_NOUPDATE=noupdate
 for ARG_LAST; do true; done
 
 case "$1" in
     get)
-        update-silent ${ARG_LAST}
         version-get
         ;;
     major)
-        update-silent ${ARG_LAST}
         version-major
         ;;
     minor)
-        update-silent ${ARG_LAST}
         version-minor
         ;;
     patch|next)
-        update-silent ${ARG_LAST}
         version-patch
         ;;
     debug)
         plugin-debug
-        ;;
-    update)
-        update
         ;;
     help)
         usage

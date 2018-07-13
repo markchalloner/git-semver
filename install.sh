@@ -11,7 +11,7 @@ readonly DIR_HOME="${HOME}"
 uname -s | grep -q 'MINGW[^_]\+_NT'
 OS_MINGW=$?
 
-dirs=("${HOME}/bin" "/usr/local/bin" "/usr/bin" "/bin")
+dirs=("${HOME}/.local/bin" "${HOME}/bin" "/usr/local/bin" "/usr/bin" "/bin")
 for i in "${dirs[@]}"
 do
     if [ -d "${i}" ] && $(echo $PATH | grep -q "${i}")
