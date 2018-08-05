@@ -137,12 +137,16 @@ version-parse-minor() {
 }
 
 version-parse-patch() {
-    echo "$1" | cut -d "." -f3
+    echo "$1" | cut -d "." -f3 | cut -d "-" -f1
+}
+
+version-parse-sufix() {
+    echo "$1" | cut -d "." -f3 | grep -o "\-\(rc\|beta\|alpha\)"
 }
 
 version-get() {
     # shellcheck disable=SC2155
-    local version=$(git tag | grep "^${VERSION_PREFIX}[0-9]\+\.[0-9]\+\.[0-9]\+$" | sed "s/^${VERSION_PREFIX}//" | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)
+    local version=$(git describe --abbre=0 --tags | grep "^${VERSION_PREFIX}[0-9]\+\.[0-9]\+\.[0-9]\+\(-rc|beta|alpha\)\?" | sed "s/^${VERSION_PREFIX}//")
     if [ "" == "${version}" ]
     then
         return 1
@@ -156,11 +160,13 @@ version-major() {
     local version=$(version-get)
     # shellcheck disable=SC2155
     local major=$(version-parse-major "${version}")
-    if [ "" == "$version" ]
+     # shellcheck disable=SC2155
+    local suffix=$(version-parse-sufix "${version}")
+   if [ "" == "$version" ]
     then
-        local new=${VERSION_PREFIX}1.0.0
+        local new=${VERSION_PREFIX}1.0.0${suffix}
     else
-        local new=${VERSION_PREFIX}$((major+1)).0.0
+        local new=${VERSION_PREFIX}$((major+1)).0.0${suffix}
     fi
     version-do "$new" "$version"
 }
@@ -172,11 +178,13 @@ version-minor() {
     local major=$(version-parse-major "${version}")
     # shellcheck disable=SC2155
     local minor=$(version-parse-minor "${version}")
+    # shellcheck disable=SC2155
+    local suffix=$(version-parse-sufix "${version}")
     if [ "" == "$version" ]
     then
-        local new=${VERSION_PREFIX}0.1.0
+        local new=${VERSION_PREFIX}0.1.0${suffix}
     else
-        local new=${VERSION_PREFIX}${major}.$((minor+1)).0
+        local new=${VERSION_PREFIX}${major}.$((minor+1)).0${suffix}
     fi
     version-do "$new" "$version"
 }
@@ -190,11 +198,13 @@ version-patch() {
     local minor=$(version-parse-minor "${version}")
     # shellcheck disable=SC2155
     local patch=$(version-parse-patch "${version}")
+    # shellcheck disable=SC2155
+    local suffix=$(version-parse-sufix "${version}")
     if [ "" == "$version" ]
     then
-        local new=${VERSION_PREFIX}0.1.0
+        local new=${VERSION_PREFIX}0.1.0${suffix}
     else
-        local new=${VERSION_PREFIX}${major}.${minor}.$((patch+1))
+        local new=${VERSION_PREFIX}${major}.${minor}.$((patch+1))${suffix}
     fi
     version-do "$new" "$version"
 }
