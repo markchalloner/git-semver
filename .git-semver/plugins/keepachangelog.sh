@@ -22,6 +22,12 @@ function run() {
     local version_new_actual="[${version_new}]"
     local version_previous=
 
+    # If the new version just has build information then skip the check
+    if [ "${version_new%+*}" == "${version_current%+*}" ]
+    then
+        return ${status}
+    fi
+
     # If there is no existing version relax rules slightly
     if [ "" == "${version_current}" ]
     then

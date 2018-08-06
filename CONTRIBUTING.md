@@ -6,7 +6,13 @@ We accept contributions via Pull Requests on [Github](https://github.com/markcha
 
 ## Contributers
 
+### Users with merges
+
 - https://github.com/markchalloner/git-semver/graphs/contributors
+
+### Others
+
+- [@jaapio](https://github.com/jaapio) ([#26](https://github.com/markchalloner/git-semver/pull/26))
 
 ## Pull Requests
 

@@ -12,10 +12,12 @@ usage() {
 		See https://github.com/markchalloner/git-semver for more detail.
 
 		Commands
-		 get        Gets the current version (tag)
-		 major      Generates a tag for the next major version and echos it to the screen
-		 minor      Generates a tag for the next minor version and echos it to the screen
-		 patch|next Generates a tag for the next patch version and echos it to the screen
+		 get                                        Gets the current version (tag)
+		 major [-p <pre-release>] [-b <build>]      Generates a tag for the next major version and echos to the screen
+		 minor [-p [<pre-release> [-b <build>]      Generates a tag for the next minor version and echos to the screen
+		 patch|next [-p <pre-release>] [-b <build>] Generates a tag for the next patch version and echos to the screen
+		 pre-release -p <pre-release> [-b <build>]  Generates a tag for a pre-release version and echos to the screen
+		 build -b <build>                           Generates a tag for a build and echos to the screen
 		 help       This message
 
 	EOF
@@ -124,12 +126,35 @@ plugin-debug() {
     plugin-run "$new" "$version"
 }
 
+validate-pre-release() {
+    local pre_release=$1
+    if ! [[ "$pre_release" =~ ^[0-9A-Za-z.-]*$ ]] || # Not alphanumeric, `-` and `.`
+        [[ "$pre_release" =~ (^|\.)\. ]] ||          # Empty identifiers
+        [[ "$pre_release" =~ \.(\.|$) ]] ||          # Empty identifiers
+        [[ "$pre_release" =~ \.0[0-9] ]]             # Leading zeros
+    then
+        echo "Error: pre-release is not valid."
+        exit 1
+    fi
+}
+
+validate-build() {
+    local build=$1
+    if ! [[ "$build" =~ ^[0-9A-Za-z.-]*$ ]] || # Not alphanumeric, `-` and `.`
+        [[ "$build" =~ (^|\.)\. ]] ||          # Empty identifiers
+        [[ "$build" =~ \.(\.|$) ]]             # Empty identifiers
+    then
+        echo "Error: build metadata is not valid."
+        exit 1
+    fi
+}
+
 ########################################
 # Version functions
 ########################################
 
 version-parse-major() {
-    echo "$1" | cut -d "." -f1
+    echo "$1" | cut -d "." -f1 | sed 's/^${VERSION_PREFIX}//g'
 }
 
 version-parse-minor() {
@@ -137,12 +162,55 @@ version-parse-minor() {
 }
 
 version-parse-patch() {
-    echo "$1" | cut -d "." -f3
+    echo "$1" | cut -d "." -f3 | sed 's/[-+].*$//g'
+}
+
+version-parse-pre-release() {
+    echo "$1" | cut -d "." -f3 | grep -o '\-[0-9A-Za-z.]\+'
 }
 
 version-get() {
-    # shellcheck disable=SC2155
-    local version=$(git tag | grep "^${VERSION_PREFIX}[0-9]\+\.[0-9]\+\.[0-9]\+$" | sed "s/^${VERSION_PREFIX}//" | sort -t. -k 1,1n -k 2,2n -k 3,3n | tail -1)
+    local sort_args version version_pre_releases pre_release_id_count pre_release_id_index
+    local tags=$(git tag)
+    local version_pre_release=$(
+        local version_main=$(
+            echo "$tags" |
+                grep "^${VERSION_PREFIX}[0-9]\+\.[0-9]\+\.[0-9]\+" |
+                awk -F '[-+]' '{ print $1 }' |
+                uniq |
+                sort -t '.' -k 1,1n -k 2,2n -k 3,3n |
+                tail -n 1
+        )
+        local version_pre_releases=$(
+            echo "$tags" |
+                grep "^${version_main//./\\.}" |
+                awk -F '-' '{ print $2 }'
+        )
+        local pre_release_id_count=$(
+            echo "$version_pre_releases" | tr -d -c ".\n" |
+                awk 'BEGIN{ max = 0 }
+                { if (max < length) { max = length } }
+                END{ if ( max == 0 ) { print 0 } else { print max + 1 } }'
+        )
+        local sort_args='-t.'
+        for ((pre_release_id_index=1; pre_release_id_index<=$pre_release_id_count; pre_release_id_index++))
+        do
+            chars="$(echo "$version_pre_releases" | awk -F '.' '{ print $'$pre_release_id_index' }' | tr -d $'\n')"
+            if [[ "$chars" =~ ^[0-9]*$ ]]
+            then
+                sort_key_type=n
+            else
+                sort_key_type=
+            fi
+            sort_args="$sort_args -k$pre_release_id_index,$pre_release_id_index$sort_key_type"
+        done
+        echo "$version_pre_releases" |
+            eval sort $sort_args |
+            awk '{ if (length == 0) { print "'$version_main'" } else { print "'$version_main'-"$1 } }' |
+            tail -n 1
+    )
+    # Get the version with the build number
+    version=$(echo "$tags" | grep "^${version_pre_release//./\\.}" | tail -n 1)
     if [ "" == "${version}" ]
     then
         return 1
@@ -152,20 +220,24 @@ version-get() {
 }
 
 version-major() {
+    local pre_release=${1:+-$1}
+    local build=${2:++$2}
     # shellcheck disable=SC2155
     local version=$(version-get)
     # shellcheck disable=SC2155
     local major=$(version-parse-major "${version}")
     if [ "" == "$version" ]
     then
-        local new=${VERSION_PREFIX}1.0.0
+        local new=${VERSION_PREFIX}1.0.0${pre_release}${build}
     else
-        local new=${VERSION_PREFIX}$((major+1)).0.0
+        local new=${VERSION_PREFIX}$((major+1)).0.0${pre_release}${build}
     fi
     version-do "$new" "$version"
 }
 
 version-minor() {
+    local pre_release=${1:+-$1}
+    local build=${2:++$2}
     # shellcheck disable=SC2155
     local version=$(version-get)
     # shellcheck disable=SC2155
@@ -174,14 +246,36 @@ version-minor() {
     local minor=$(version-parse-minor "${version}")
     if [ "" == "$version" ]
     then
-        local new=${VERSION_PREFIX}0.1.0
+        local new=${VERSION_PREFIX}0.1.0${pre_release}${build}
     else
-        local new=${VERSION_PREFIX}${major}.$((minor+1)).0
+        local new=${VERSION_PREFIX}${major}.$((minor+1)).0${pre_release}${build}
     fi
     version-do "$new" "$version"
 }
 
 version-patch() {
+    local pre_release=${1:+-$1}
+    local build=${2:++$2}
+   # shellcheck disable=SC2155
+    local version=$(version-get)
+    # shellcheck disable=SC2155
+    local major=$(version-parse-major "${version}")
+    # shellcheck disable=SC2155
+    local minor=$(version-parse-minor "${version}")
+    # shellcheck disable=SC2155
+    local patch=$(version-parse-patch "${version}")
+    if [ "" == "$version" ]
+    then
+        local new=${VERSION_PREFIX}0.1.0${pre_release}${build}
+    else
+        local new=${VERSION_PREFIX}${major}.${minor}.$((patch+1))${pre_release}${build}
+    fi
+    version-do "$new" "$version"
+}
+
+version-pre-release() {
+    local pre_release=$1
+    local build=${2:++$2}
     # shellcheck disable=SC2155
     local version=$(version-get)
     # shellcheck disable=SC2155
@@ -192,9 +286,30 @@ version-patch() {
     local patch=$(version-parse-patch "${version}")
     if [ "" == "$version" ]
     then
-        local new=${VERSION_PREFIX}0.1.0
+        local new=${VERSION_PREFIX}0.1.0-${pre_release}${build}
     else
-        local new=${VERSION_PREFIX}${major}.${minor}.$((patch+1))
+        local new=${VERSION_PREFIX}${major}.${minor}.${patch}-${pre_release}${build}
+    fi
+    version-do "$new" "$version"
+}
+
+version-build() {
+    local build=$1
+    # shellcheck disable=SC2155
+    local version=$(version-get)
+    # shellcheck disable=SC2155
+    local major=$(version-parse-major "${version}")
+    # shellcheck disable=SC2155
+    local minor=$(version-parse-minor "${version}")
+    # shellcheck disable=SC2155
+    local patch=$(version-parse-patch "${version}")
+    # shellcheck disable=SC2155
+    local pre_release=$(version-parse-pre-release "${version}")
+    if [ "" == "$version" ]
+    then
+        local new=${VERSION_PREFIX}0.1.0${pre_release}+${build}
+    else
+        local new=${VERSION_PREFIX}${major}.${minor}.${patch}${pre_release}+${build}
     fi
     version-do "$new" "$version"
 }
@@ -242,21 +357,53 @@ DIR_ROOT="$(git rev-parse --show-toplevel 2> /dev/null)"
 GIT_HASH="$(git rev-parse HEAD 2> /dev/null)"
 GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2> /dev/null)"
 
-# Set $1 to last argument.
-for _; do true; done
+# Parse args
+action=
+build=
+pre_release=
+while :
+do
+    case "$1" in
+        -b)
+            build=$2
+            shift
+            validate-build "$build"
+            ;;
+        -p)
+            pre_release=$2
+            shift
+            validate-pre-release "$pre_release"
+            ;;
+        ?*)
+            action=$1
+            ;;
+        *)
+            break
+            ;;
+    esac
+    shift
+done
 
-case "$1" in
+case "$action" in
     get)
         version-get
         ;;
     major)
-        version-major
+        version-major "$pre_release" "$build"
         ;;
     minor)
-        version-minor
+        version-minor "$pre_release" "$build"
         ;;
     patch|next)
-        version-patch
+        version-patch "$pre_release" "$build"
+        ;;
+    pre-release)
+        [ -n "$pre_release" ] || usage
+        version-pre-release "$pre_release" "$build"
+        ;;
+    build)
+        [ -n "$build" ] || usage
+        version-build "$build"
         ;;
     debug)
         plugin-debug
