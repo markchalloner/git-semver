@@ -225,8 +225,15 @@ readonly DIR_HOME="${HOME}"
 # (see http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html)
 DIR_CONF="${XDG_CONFIG_HOME:-${HOME}}/.git-semver"
 
+# Set vars
+DIR_ROOT="$(git rev-parse --show-toplevel 2> /dev/null)"
+
 # Set (and load) user config
-if [ -f "${DIR_CONF}/config" ]
+if [ -f "${DIR_ROOT}/.git-semver" ]
+then
+    FILE_CONF="${DIR_ROOT}/.git-semver"
+    source "${FILE_CONF}"
+elif [ -f "${DIR_CONF}/config" ]
 then
     FILE_CONF="${DIR_CONF}/config"
     # shellcheck source=config.example
@@ -235,9 +242,6 @@ else
     # No existing config file was found; use default
     FILE_CONF="${DIR_HOME}/.git-semver/config"
 fi
-
-# Set vars
-DIR_ROOT="$(git rev-parse --show-toplevel 2> /dev/null)"
 
 GIT_HASH="$(git rev-parse HEAD 2> /dev/null)"
 GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2> /dev/null)"
