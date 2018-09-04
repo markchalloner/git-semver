@@ -12,13 +12,13 @@ usage() {
 		See https://github.com/markchalloner/git-semver for more detail.
 
 		Commands
-		 get                                        Gets the current version (tag)
-		 major [-p <pre-release>] [-b <build>]      Generates a tag for the next major version and echos to the screen
-		 minor [-p [<pre-release> [-b <build>]      Generates a tag for the next minor version and echos to the screen
-		 patch|next [-p <pre-release>] [-b <build>] Generates a tag for the next patch version and echos to the screen
-		 pre-release -p <pre-release> [-b <build>]  Generates a tag for a pre-release version and echos to the screen
-		 build -b <build>                           Generates a tag for a build and echos to the screen
-		 help       This message
+		 get                                                   Gets the current version (tag)
+		 major [--dryrun] [-p <pre-release>] [-b <build>]      Generates a tag for the next major version and echos to the screen
+		 minor [--dryrun] [-p [<pre-release> [-b <build>]      Generates a tag for the next minor version and echos to the screen
+		 patch|next [--dryrun] [-p <pre-release>] [-b <build>] Generates a tag for the next patch version and echos to the screen
+		 pre-release [--dryrun] -p <pre-release> [-b <build>]  Generates a tag for a pre-release version and echos to the screen
+		 build [--dryrun] -b <build>                           Generates a tag for a build and echos to the screen
+		 help                                                  This message
 
 	EOF
 	exit
@@ -323,7 +323,10 @@ version-do() {
     then
         cmd="$cmd -as -m $new"
     fi
-    if plugin-run "$new" "$version"
+    if [ $dryrun == 1 ]
+    then
+        echo "$new"
+    elif plugin-run "$new" "$version"
     then
         $cmd "$new" && echo "$new"
     fi
@@ -365,9 +368,16 @@ GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD 2> /dev/null)"
 action=
 build=
 pre_release=
+dryrun=0
 while :
 do
     case "$1" in
+        -d)
+            dryrun=1
+            ;;
+        --dryrun)
+            dryrun=1
+            ;;
         -b)
             build=$2
             shift
