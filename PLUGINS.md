@@ -5,8 +5,8 @@
 - [Introduction](#introduction)
 - [Installation](#installation)
 - [Plugins](#plugins)
-  - [Keep A Changelog](#keep-a-changelog)
-  - [NPM `package.json`](#npm-package-json)
+  - [Keep A Changelog](#keep-a-changelog---keepachangelogsh)
+  - [NPM `package.json`](#npm-packagejson---npmpackagejsonsh)
 - [Contributing](#contributing)
 
 ## Introduction
