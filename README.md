@@ -133,6 +133,7 @@ git semver [help]
 
 Git-semver will check for a configuration file in the following locations (and use the one that exists):
 
+- `$GIT_REPO_ROOT/.git-semver`
 - `$XDG_CONFIG_HOME/.git-semver/config`
 - `$HOME/.git-semver/config`
 
