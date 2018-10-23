@@ -5,6 +5,10 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
 
 ## [Unreleased][unreleased]
 
+### Fixed
+
+- Version prefix not applying to current version in plugins.
+
 ## [3.0.1] - 2018-07-13
 ### Fixed
 - Incorrect statements in README.
