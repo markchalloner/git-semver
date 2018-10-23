@@ -167,9 +167,9 @@ version-major() {
     local major=$(version-parse-major "${version}")
     if [ "" == "$version" ]
     then
-        local new=${VERSION_PREFIX}1.0.0
+        local new=1.0.0
     else
-        local new=${VERSION_PREFIX}$((major+1)).0.0
+        local new=$((major+1)).0.0
     fi
     version-do "$new" "$version"
 }
@@ -183,9 +183,9 @@ version-minor() {
     local minor=$(version-parse-minor "${version}")
     if [ "" == "$version" ]
     then
-        local new=${VERSION_PREFIX}0.1.0
+        local new=0.1.0
     else
-        local new=${VERSION_PREFIX}${major}.$((minor+1)).0
+        local new=${major}.$((minor+1)).0
     fi
     version-do "$new" "$version"
 }
@@ -201,16 +201,18 @@ version-patch() {
     local patch=$(version-parse-patch "${version}")
     if [ "" == "$version" ]
     then
-        local new=${VERSION_PREFIX}0.1.0
+        local new=0.1.0
     else
-        local new=${VERSION_PREFIX}${major}.${minor}.$((patch+1))
+        local new=${major}.${minor}.$((patch+1))
     fi
     version-do "$new" "$version"
 }
 
 version-do() {
-    local new="$1"
-    local version="$2"
+    # shellcheck disable=SC2155
+    local new=$(version-get-with-prefix "$1")
+    # shellcheck disable=SC2155
+    local version=$(version-get-with-prefix "$2")
     local sign="${GIT_SIGN:-0}"
     local cmd="git tag"
     if [ "$sign" == "1" ]
