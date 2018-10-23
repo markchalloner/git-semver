@@ -151,6 +151,15 @@ version-get() {
     fi
 }
 
+version-get-with-prefix() {
+    if [ "" == "$1" ]
+    then
+        return 1
+    else
+        echo "${VERSION_PREFIX}$1"
+    fi
+}
+
 version-major() {
     # shellcheck disable=SC2155
     local version=$(version-get)
