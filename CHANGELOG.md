@@ -1,9 +1,12 @@
 # Change Log
 All notable changes to this project will be documented in this file.
-This project adheres to [Semantic Versioning](http://semver.org/).
-This file uses change log convention from [Keep a CHANGELOG](http://keepachangelog.com).
+This project adheres to [Semantic Versioning].
+This file uses change log convention from [Keep a CHANGELOG].
 
 ## [Unreleased][unreleased]
+### Added
+- Added pre-release and build options. Note: the [keepachangelog.sh plugin] this will need to be updated to
+ignore versions which only differ in build metadata.
 
 ## [3.0.1] - 2018-07-13
 ### Fixed
@@ -89,8 +92,11 @@ This file uses change log convention from [Keep a CHANGELOG](http://keepachangel
 
 [CHANGELOG.md]: CHANGELOG.md
 [CONTRIBUTING.md]: CONTRIBUTING.md
+[keepachangelog.sh plugin]: plugins/keepachangelog.sh
+[Keep a CHANGELOG]: http://keepachangelog.com
 [LICENCE.md]: LICENCE.md
 [README.md]: README.md
+[Semantic Versioning]: http://semver.org/
 [xdg_basedirs]: http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
 
 [unreleased]: https://github.com/markchalloner/git-semver/compare/3.0.1...HEAD

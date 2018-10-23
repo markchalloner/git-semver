@@ -52,7 +52,7 @@ The installer will not overwrite any existing [configuration](#configuration) or
 
 ## Usage
 
-### Get latest version tag
+### Get highest version tag
 
 ``` bash
 git semver get
@@ -65,38 +65,61 @@ Will return empty if no version has been created.
 Versions are created as tags and are generated using:
 
 ``` bash
-git semver [major|minor|patch|next]
+git semver [major|minor|patch|next|pre-release|build] [-p <pre-release>] [-b <build>]
 ```
-
-#### Patch (Next)
-
-Increment the patch component (0.1.0 -> 0.1.1)
-
-``` bash
-git semver patch|next
-```
-
-If no version has been created, the initial version will be: **0.1.0**
-
-#### Minor
-
-Increment the minor component (0.1.0 -> 0.2.0)
-
-``` bash
-git semver minor
-```
-
-If no version has been created, the initial version will be: **0.1.0**
 
 #### Major
 
-Increment the major component (0.1.0 -> 1.0.0)
+Increment the major component (0.1.0 -> 1.0.0), optionally adding a pre-release version and build metadata.
 
 ``` bash
-git semver major
+git semver major [-p <pre-release>] [-b <build>]
 ```
 
-If no version has been created, the initial version will be: **1.0.0**
+If no version has been created, the initial version will be: **1.0.0\[-<pre-release>\]\[+<build>\]**
+
+#### Minor
+
+Increment the minor component (0.1.0 -> 0.2.0), optionally adding a pre-release version and build metadata.
+
+``` bash
+git semver minor [-p <pre-release>] [-b <build>]
+```
+
+If no version has been created, the initial version will be: **0.1.0\[-<pre-release>\]\[+<build>\]**
+
+
+#### Patch (Next)
+
+Increment the patch component (0.1.0 -> 0.1.1), optionally adding a pre-release version and build metadata.
+
+``` bash
+git semver patch|next [-p <pre-release>] [-b <build>]
+```
+
+If no version has been created, the initial version will be: **0.1.0\[-<pre-release>\]\[+<build>\]**
+
+#### Pre-release
+
+Create a new pre-release version based on the next patch version if a release version exists (0.1.0 ->
+0.1.1-<pre-release>) or the current patch version (0.1.0-alpha -> 0.1.0-<pre-release>) if it does not,
+optionally adding build metadata.
+
+``` bash
+git semver pre-release -p <pre-release> [-b <build>]
+```
+
+If no version has been created, the initial version will be: **0.1.0-<pre-release>\[+<build>\]**
+
+#### Build
+
+Create a new build based on the current patch version.
+
+``` bash
+git semver build -b <build>
+```
+
+If no version has been created, the initial version will be: **0.1.0+<build>**
 
 ### Help
 
