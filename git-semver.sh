@@ -154,7 +154,7 @@ validate-build() {
 ########################################
 
 version-parse-major() {
-    echo "$1" | cut -d "." -f1 | sed 's/^${VERSION_PREFIX}//g'
+    echo "$1" | cut -d "." -f1 | sed "s/^${VERSION_PREFIX}//g"
 }
 
 version-parse-minor() {
