@@ -65,7 +65,13 @@ Will return empty if no version has been created.
 Versions are created as tags and are generated using:
 
 ``` bash
-git semver [major|minor|patch|next|pre-release|build] [-p <pre-release>] [-b <build>]
+git semver [major|minor|patch|next|pre-release|build] [--dryrun] [-p <pre-release>] [-b <build>]
+```
+
+To see what a tag would be without actually creating it, run a dryrun with `-d` or `--dryrun`:
+
+```
+git semver patch --dryrun
 ```
 
 #### Major
