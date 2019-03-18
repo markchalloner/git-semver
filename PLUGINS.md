@@ -76,6 +76,12 @@ The [`package.json`] file is used by [NPM], typically for [Node.js] applications
 }
 ```
 
+### Python `setup.py` - [`setuppy_update.sh`]
+
+This plugin makes sure you never forget to update your package version.
+
+When active, it will search for a setup.py file in the root of the project, and change the `version` argument passed to the setup class to the version being tagged. Then, it will commit it with a "Updated setup.py version" message.
+
 ## Contributing
 
 A plugin can be any executable file stored in `.git-semver/plugins/`.
