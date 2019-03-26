@@ -63,7 +63,10 @@ plugin-list() {
         plugin_dir="${dirs[${i}]}/.git-semver/plugins"
         if [ -d "${plugin_dir}" ]
         then
-            find "${plugin_dir}" -maxdepth 1 -type f -exec echo "${plugin_type},{}" \;
+            for plugin in $(find "${plugin_dir}" -maxdepth 1 -type f | sort -k 1.1n,1.2n)
+            do
+                echo "${plugin_type},${plugin}"
+            done
         fi
     done
 }
