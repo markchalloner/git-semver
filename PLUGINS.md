@@ -19,7 +19,7 @@ Location                        | Contains
 `./.git-semver/plugins`         | Project plugins (added and committed) which run on just the current git project
 `${HOME}/.git-semver/plugins/`  | User plugins which run on all git projects                
 
-Plugin can stop a tag being generated (for example if a version file does not exist).
+Plugins are executed orderedly, so you can number-prefix them to ensure execution order. Number prefixed plugins will run before anything else, and they will be executed from lower to higher. Plugins can also stop a tag being generated (for example if a version file does not exist).
 
 See [Contributing](#contributing) for detail on creating a plugin or take a look at the [example plugin] or any of the [real plugins](#plugins).
 
