@@ -84,6 +84,12 @@ In other words, if you create a `3.0.0` version, this plugin will also create a 
 
 This is useful, for example, to maintain multiple versions of an API: If you have a legacy version `1.5.3` API you need to maintain, and a new version `2`, you can use this plugin to maintain a "rolling" `1.5` tag, and always deploy the latest bugfix for your legacy API, and maybe build against a `2` tag for the new one, to get the latest features.
 
+### Python `setup.py` - [`setuppy_update.sh`]
+
+This plugin makes sure you never forget to update your package version.
+
+When active, it will search for a setup.py file in the root of the project, and change the `version` argument passed to the setup class to the version being tagged. Then, it will commit it with a "Updated setup.py version" message.
+
 ## Contributing
 
 A plugin can be any executable file stored in `.git-semver/plugins/`.
