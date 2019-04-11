@@ -26,6 +26,8 @@ function run() {
     fi
     git tag "$major_number"
 
+    echo
+
     return 0
 }
 
