@@ -7,7 +7,7 @@ function run() {
     local minor_number=$(echo "$version_new" | cut --delimiter="." --fields=2)
     local major_number=$(echo "$version_new" | cut --delimiter="." --fields=1)
 
-    minor_tag="$major_number"".""$minor_number"
+    minor_tag="$major_number"."$minor_number"
     if git tag --list | grep -xq "$minor_tag"
     then
         echo "Recreating minor tag $minor_tag"
