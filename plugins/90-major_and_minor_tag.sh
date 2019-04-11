@@ -31,7 +31,7 @@ function run() {
 
 case "${1}" in
     --about)
-        echo -n "Example plugin."
+        echo -n "Create or recreate a minor and major tag on each version bump."
         ;;
     *)
         run "$@"
