@@ -13,7 +13,7 @@ function run() {
         echo "Recreating minor tag $minor_tag"
         git tag --delete "$minor_tag"
     else
-        echo "Creating minor tag ""$major_number"".""$minor_number"
+        echo "Creating minor tag $minor_tag"
     fi
     git tag "$minor_tag"
 
