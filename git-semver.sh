@@ -70,7 +70,7 @@ plugin-list() {
         plugin_dir="${dirs[${i}]}/.git-semver/plugins"
         if [ -d "${plugin_dir}" ]
         then
-            find "${plugin_dir}" -maxdepth 1 -type f -exec echo "${plugin_type},{}" \; 
+            find "${plugin_dir}" -maxdepth 1 -type f -exec echo "${plugin_type},{}" \;
         fi
     done
 }
