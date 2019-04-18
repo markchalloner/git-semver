@@ -225,7 +225,6 @@ version-get() {
     then
         return 1
     else
-        exec 1>&6 6>&-
         echo "${version}"
     fi
 }
@@ -422,6 +421,7 @@ done
 
 case "$action" in
     get)
+        exec 1>&6 6>&-
         version-get
         ;;
     major)
