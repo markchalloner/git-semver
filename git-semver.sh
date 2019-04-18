@@ -3,7 +3,10 @@
 # Usage
 ########################################
 
+exec 6>&1
+
 usage() {
+    exec 1>&6 6>&-
 	cat <<-EOF
 		Usage: $(basename-git "$0") [command]
 
@@ -12,13 +15,17 @@ usage() {
 		See https://github.com/markchalloner/git-semver for more detail.
 
 		Commands
-		 get                                                   Gets the current version (tag)
-		 major [--dryrun] [-p <pre-release>] [-b <build>]      Generates a tag for the next major version and echos to the screen
-		 minor [--dryrun] [-p [<pre-release> [-b <build>]      Generates a tag for the next minor version and echos to the screen
-		 patch|next [--dryrun] [-p <pre-release>] [-b <build>] Generates a tag for the next patch version and echos to the screen
-		 pre-release [--dryrun] -p <pre-release> [-b <build>]  Generates a tag for a pre-release version and echos to the screen
-		 build [--dryrun] -b <build>                           Generates a tag for a build and echos to the screen
-		 help                                                  This message
+		 get                                                             Gets the current version (tag)
+		 major [--quiet] [--dryrun] [-p <pre-release>] [-b <build>]      Generates a tag for the next major version and echos to the screen
+		 minor [--quiet] [--dryrun] [-p [<pre-release> [-b <build>]      Generates a tag for the next minor version and echos to the screen
+		 patch|next [--quiet] [--dryrun] [-p <pre-release>] [-b <build>] Generates a tag for the next patch version and echos to the screen
+		 pre-release [--quiet] [--dryrun] -p <pre-release> [-b <build>]  Generates a tag for a pre-release version and echos to the screen
+		 build [--quiet] [--dryrun] -b <build>                           Generates a tag for a build and echos to the screen
+		 help                                                            This message
+
+		Options
+		 -q, --quiet                                                     Only output the final version echo to stdout, or noting on error
+		 -d, --dryrun                                                    Echo the version that would've been tagged, skip running plugins
 
 	EOF
 	exit
@@ -325,10 +332,15 @@ version-do() {
     fi
     if [ $dryrun == 1 ]
     then
+        exec 1>&6 6>&-
         echo "$new"
     elif plugin-run "$new" "$version"
     then
-        $cmd "$new" && echo "$new"
+        if $cmd "$new"
+        then
+            exec 1>&6 6>&-
+            echo "$new"
+        fi
     fi
 }
 
@@ -388,6 +400,12 @@ do
             shift
             validate-pre-release "$pre_release"
             ;;
+        -q)
+            exec > /dev/null
+            ;;
+        --quiet)
+            exec > /dev/null
+            ;;
         ?*)
             action=$1
             ;;
@@ -400,6 +418,7 @@ done
 
 case "$action" in
     get)
+        exec 1>&6 6>&-
         version-get
         ;;
     major)
