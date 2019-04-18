@@ -14,7 +14,8 @@ function run() {
     fi
 
     tmpfile=$(mktemp)
-    sed "s/version[[:blank:]]*=[[:blank:]]*[\",'][0-9][0-9]*.[0-9][0-9]*.[0-9][0-9]*[\",'][[:blank:]]*,/version=\"${version_new}\",/" < "${git_root}/setup.py" > "${tmpfile}"
+    # Extended regexs are purposely avoided for Mac OS and Free BSD compatbility.
+    sed "s/version[[:blank:]]*=[[:blank:]]*[\"'][0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*[\"'][[:blank:]]*,/version=\"${version_new}\",/" < "${git_root}/setup.py" > "${tmpfile}"
     cat "${tmpfile}" > "${setuppy_path}"
     rm -f "${tmpfile}"
 
