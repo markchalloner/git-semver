@@ -76,6 +76,14 @@ The [`package.json`] file is used by [NPM], typically for [Node.js] applications
 }
 ```
 
+### Major and minor tags - [`90-major_and_minor_tag.sh`]
+
+This plugins creates 2 extra tags each time you `git-semver major` or `git-semver minor`, one with the minor version and other with the major one.
+
+In other words, if you create a `3.0.0` version, this plugin will also create a `3.0` and `3` tag. Also, if you create a `3.1.0` tag, it will delete the previously created `3` tag, and create it again pointing to the `3.1.0` commit, together with a brand new `3.1` tag.
+
+This is useful, for example, to maintain multiple versions of an API: If you have a legacy version `1.5.3` API you need to maintain, and a new version `2`, you can use this plugin to maintain a "rolling" `1.5` tag, and always deploy the latest bugfix for your legacy API, and maybe build against a `2` tag for the new one, to get the latest features.
+
 ### Python `setup.py` - [`setuppy_update.sh`]
 
 This plugin makes sure you never forget to update your package version.
