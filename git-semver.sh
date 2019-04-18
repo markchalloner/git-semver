@@ -24,7 +24,7 @@ usage() {
 		 help                                                            This message
 
 		Options
-		 -q, --quiet                                                     Only output the final version echo to stdout
+		 -q, --quiet                                                     Only output the final version echo to stdout, or noting on error
 		 -d, --dryrun                                                    Echo the version that would've been tagged, skip running plugins
 
 	EOF
