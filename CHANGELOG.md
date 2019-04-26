@@ -5,6 +5,15 @@ This file uses change log convention from [Keep a CHANGELOG].
 
 ## [Unreleased][unreleased]
 ### Added
+- Added `-q, --quiet` option
+- Added `10-setuppy_update.sh` plugin. Check `PLUGINS.md` for more detils.
+- Added `90-major_and_minor_tag.sh` plugin. Check `PLUGINS.md` for more detils.
+
+### Changed
+- Modified plugin execution order: Now plugins are run in numerical ascending order, if numbered, or alphabertical ascending, if not. Check `PLUGINS.md` for more detils.
+
+## [Unreleased][unreleased]
+### Added
 - Added pre-release and build options. Note: the [keepachangelog.sh plugin] this will need to be updated to
 ignore versions which only differ in build metadata.
 
