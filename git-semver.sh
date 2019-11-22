@@ -172,17 +172,22 @@ version-parse-pre-release() {
 version-get() {
     local sort_args version version_pre_releases pre_release_id_count pre_release_id_index
     local tags=$(git tag)
+    local sorted_tags=$(
+        echo "$tags" |
+            grep -oP "^${VERSION_PREFIX}\K[0-9]+\.[0-9]+\.[0-9]+.*" |
+            awk -F '[-+]' '{ print $1 }' |
+            uniq |
+            sort -t '.' -k 1,1n -k 2,2n -k 3,3n |
+            awk -v VERSION_PREFIX="${VERSION_PREFIX}" '{print VERSION_PREFIX $1}'
+    )
+
     local version_pre_release=$(
         local version_main=$(
-            echo "$tags" |
-                grep "^${VERSION_PREFIX}[0-9]\+\.[0-9]\+\.[0-9]\+" |
-                awk -F '[-+]' '{ print $1 }' |
-                uniq |
-                sort -t '.' -k 1,1n -k 2,2n -k 3,3n |
+            echo "$sorted_tags" |
                 tail -n 1
         )
         local version_pre_releases=$(
-            echo "$tags" |
+            echo "$sorted_tags" |
                 grep "^${version_main//./\\.}" |
                 awk -F '-' '{ print $2 }'
         )
@@ -210,7 +215,7 @@ version-get() {
             tail -n 1
     )
     # Get the version with the build number
-    version=$(echo "$tags" | grep "^${version_pre_release//./\\.}" | tail -n 1)
+    version=$(echo "$sorted_tags" | grep "^${version_pre_release//./\\.}" | tail -n 1)
     if [ "" == "${version}" ]
     then
         return 1
