@@ -75,6 +75,7 @@ The [`package.json`] file is used by [NPM], typically for [Node.js] applications
    ...
 }
 ```
+When using a [monorepo](https://github.com/joelparkerhenderson/monorepo_vs_polyrepo) architecture, there might be several files in which the version number should be tracked. The relative paths to all of these files can be added to the `files` variable at the beginning of the `npmpackagejson.sh` plugin.
 
 ### Major and minor tags - [`90-major_and_minor_tag.sh`]
 
@@ -131,7 +132,7 @@ Plugins can print anything to `stdout` or `stderr`. This will be formatted and d
 
 ### Pull requests
 
-Please contribute your plugin by opening a pull request. 
+Please contribute your plugin by opening a pull request.
 
 See [CONTRIBUTING.md] for more details.
 
@@ -152,4 +153,3 @@ Plugin format was borrowed from [Git hooks][Git hooks].
 [NPM]:                  https://www.npmjs.com
 [`package.json`]:       http://browsenpm.org/package.json
 [SASS]:                 http://sass-lang.com
-
